@@ -1,7 +1,7 @@
 <?php
 // Sanitize and validate file paths (with realpath)
 function safePath($path) {
-    $realBase = realpath('uploads');
+    $realBase = realpath('pcdo');
     $userPath = realpath($path);
 
     if ($userPath && strpos($userPath, $realBase) === 0) {
@@ -64,7 +64,7 @@ $searchQuery = isset($_GET['search']) ? strtolower(trim($_GET['search'])) : '';
     </form>
 
     <?php
-    $uploadsDir = "uploads";
+    $uploadsDir = "pcdo";
     if (is_dir($uploadsDir)) {
         $coops = array_diff(scandir($uploadsDir), ['.', '..']);
         $matchedCoops = [];

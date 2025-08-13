@@ -71,7 +71,7 @@ function cleanCoopName($name) {
     // If coop is entered, show checklist folders
     if (isset($_GET['coop'])):
         $coopName = cleanCoopName($_GET['coop']);
-        $baseDir = "uploads/" . $coopName;
+        $baseDir = "pcdo/" . $coopName;
 
         // Create coop base folder if not exists
         if (!is_dir($baseDir)) {
@@ -128,7 +128,7 @@ function cleanCoopName($name) {
     if (isset($_POST['upload'])) {
         $coopName = cleanCoopName($_POST['coop']);
         $area = $_POST['area'];
-        $targetDir = "uploads/" . $coopName . "/" . $area . "/";
+        $targetDir = "pcdo/" . $coopName . "/" . $area . "/";
 
         // Delete existing file if any (to allow only one)
         $existingFiles = array_diff(scandir($targetDir), ['.', '..']);
