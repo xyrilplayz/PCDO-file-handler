@@ -60,18 +60,28 @@ function cleanCoopName($name) {
     </style>
 </head>
 <body>
-    <h2>Cooperative Document Upload</h2>
     <form action="index.php" method="GET">
-        <label>Enter Cooperative Name:</label>
-        <input type="text" name="coop" required value="<?php echo isset($_GET['coop']) ? htmlspecialchars($_GET['coop']) : ''; ?>">
-        <button type="submit">Go</button>
-    </form>
+    <label>Choose your Availed program</label>
+    <select name="prog" required>
+        <option value="LICAP">LICAP</option>
+        <option value="SULONG">SULONG</option>
+        <option value="USAD">USAD</option>
+        <option value="COPSE">COPSE</option>
+    </select>
 
+    <br><br>
+
+    <label>Enter Cooperative Name:</label>
+    <input type="text" name="coop" required value="<?php echo isset($_GET['coop']) ? htmlspecialchars($_GET['coop']) : ''; ?>">
+    <button type="submit">Go</button>
+</form>
+  
     <?php
     // If coop is entered, show checklist folders
     if (isset($_GET['coop'])):
         $coopName = cleanCoopName($_GET['coop']);
-        $baseDir = "pcdo/" . $coopName;
+        $program = isset($_GET['prog']) ? cleanCoopName($_GET['prog']) : 'UnknownProgram';
+        $baseDir = "pcdo/" . $program . "/" . $coopName;
 
         // Create coop base folder if not exists
         if (!is_dir($baseDir)) {
@@ -127,8 +137,9 @@ function cleanCoopName($name) {
     // Handle file upload
     if (isset($_POST['upload'])) {
         $coopName = cleanCoopName($_POST['coop']);
+        $program = isset($_POST['prog']) ? cleanCoopName($_POST['prog']) : 'UnknownProgram';
         $area = $_POST['area'];
-        $targetDir = "pcdo/" . $coopName . "/" . $area . "/";
+        $targetDir = "pcdo/" . $program . "/" . $coopName . "/" . $area . "/";
 
         // Delete existing file if any (to allow only one)
         $existingFiles = array_diff(scandir($targetDir), ['.', '..']);

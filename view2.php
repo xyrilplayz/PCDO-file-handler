@@ -1,5 +1,5 @@
 <?php
-// Sanitize and validate file paths (with realpath)
+// Sanitize and validate file paths
 function safePath($path) {
     $realBase = realpath('pcdo');
     $userPath = realpath($path);
@@ -58,7 +58,7 @@ $searchQuery = isset($_GET['search']) ? strtolower(trim($_GET['search'])) : '';
     <?php endif; ?>
 
     <form method="GET" style="margin-bottom: 20px;">
-        <input type="text" name="search" placeholder="Search Cooperative Name" value="<?php echo htmlspecialchars($searchQuery); ?>">
+        <input type="text" name="search" placeholder="Search Program or Cooperative Name" value="<?php echo htmlspecialchars($searchQuery); ?>">
         <button type="submit">Search</button>
         <a href="view2.php" style="margin-left:10px;">Reset</a>
     </form>
@@ -66,24 +66,30 @@ $searchQuery = isset($_GET['search']) ? strtolower(trim($_GET['search'])) : '';
     <?php
     $uploadsDir = "pcdo";
     if (is_dir($uploadsDir)) {
-        $coops = array_diff(scandir($uploadsDir), ['.', '..']);
-        $matchedCoops = [];
+        $programs = array_diff(scandir($uploadsDir), ['.', '..']);
+        $matchesFound = false;
 
-        // Filter based on search
-        foreach ($coops as $coop) {
-            if ($searchQuery === '' || strpos(strtolower($coop), $searchQuery) !== false) {
-                $matchedCoops[] = $coop;
-            }
-        }
+        foreach ($programs as $program) {
+            $programPath = "$uploadsDir/$program";
+            if (!is_dir($programPath)) continue;
 
-        if (empty($matchedCoops)) {
-            echo "<p>No matching cooperatives found.</p>";
-        } else {
-            foreach ($matchedCoops as $coop) {
+            $coops = array_diff(scandir($programPath), ['.', '..']);
+
+            foreach ($coops as $coop) {
+                // Search filter — match program or coop
+                if (
+                    $searchQuery !== '' &&
+                    strpos(strtolower($program), $searchQuery) === false &&
+                    strpos(strtolower($coop), $searchQuery) === false
+                ) {
+                    continue;
+                }
+
+                $matchesFound = true;
                 echo "<div class='coop-section'>";
-                echo "<h3>Cooperative: $coop</h3>";
+                echo "<h3>Program: $program — Cooperative: $coop</h3>";
 
-                $coopPath = "$uploadsDir/$coop";
+                $coopPath = "$programPath/$coop";
                 if (is_dir($coopPath)) {
                     $areas = array_diff(scandir($coopPath), ['.', '..']);
                     foreach ($areas as $area) {
@@ -111,6 +117,10 @@ $searchQuery = isset($_GET['search']) ? strtolower(trim($_GET['search'])) : '';
 
                 echo "</div>";
             }
+        }
+
+        if (!$matchesFound) {
+            echo "<p>No matching results found.</p>";
         }
     } else {
         echo "<p>No uploads found.</p>";
