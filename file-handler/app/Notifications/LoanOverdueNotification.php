@@ -3,8 +3,6 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Console\Scheduling\Schedule;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 
@@ -27,10 +25,9 @@ class LoanOverdueNotification extends Notification
 
     public function toMail($notifiable)
     {
-        // Find the earliest unpaid schedule due within 3 days or already overdue
+
         $dueSchedule = $this->loan->paymentSchedules()
             ->where('is_paid', false)
-            ->whereDate('due_date', '<=', now()->addDays(3))
             ->orderBy('due_date', 'asc')
             ->first();
 
@@ -44,13 +41,17 @@ class LoanOverdueNotification extends Notification
         // Work out the status message
         if ($dueSchedule->due_date->isToday()) {
             $statusText = "Your payment is due today.";
-        } elseif ($dueSchedule->due_date->isPast()) {
-            $daysOverdue = $dueSchedule->due_date->diffInDays(now());
-            $days = intval($daysOverdue);
-            $statusText = "Your payment is overdue by {$days} day(s).";
         } else {
-            $daysLeft = now()->diffInDays($dueSchedule->due_date);
-            $statusText = intval("Your payment is due in {$daysLeft} day(s).");
+            $daysLeft = now()->diffInDays($dueSchedule->due_date, false);
+            if ($daysLeft = 3) {
+                $days = intval($daysLeft);
+                $statusText = "Your payment is due in {$days} day(s).";
+            } elseif ($daysLeft < 0) {
+                $days = intval($daysLeft);
+                $statusText = "Your payment is overdue by " . abs($days) . " day(s).";
+            } else {
+                $statusText = "Your payment is due today.";
+            }
         }
 
         $dueDateText = $dueSchedule->due_date->format('F d, Y');
