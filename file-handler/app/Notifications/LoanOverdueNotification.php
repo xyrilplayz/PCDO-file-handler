@@ -18,6 +18,11 @@ class LoanOverdueNotification extends Notification
     {
         $this->loan = $loan;
     }
+    public function via($notifiable)
+    {
+        return ['mail'];
+    }
+
 
 
     public function toMail($notifiable)
@@ -41,10 +46,11 @@ class LoanOverdueNotification extends Notification
             $statusText = "Your payment is due today.";
         } elseif ($dueSchedule->due_date->isPast()) {
             $daysOverdue = $dueSchedule->due_date->diffInDays(now());
-            $statusText = "Your payment is overdue by {$daysOverdue} day(s).";
+            $days = intval($daysOverdue);
+            $statusText = "Your payment is overdue by {$days} day(s).";
         } else {
             $daysLeft = now()->diffInDays($dueSchedule->due_date);
-            $statusText = "Your payment is due in {$daysLeft} day(s).";
+            $statusText = intval("Your payment is due in {$daysLeft} day(s).");
         }
 
         $dueDateText = $dueSchedule->due_date->format('F d, Y');

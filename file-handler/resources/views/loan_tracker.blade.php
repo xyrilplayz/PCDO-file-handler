@@ -85,7 +85,7 @@
                                 <br><small class="text-danger">Penalty: ₱{{ number_format($schedule->penalty_amount, 2) }}</small>
                             @endif
                             {{-- if statement that will automatically send the notifacion if the date is overdue --}}
-                            @if($isOverdue && !$schedule->is_paid)
+                            @if(!$schedule->is_paid)
                             ₱{{ number_format($schedule->amount_due + $schedule->penalty_amount, 2) }}
                                 {{-- Add Penalty --}}
                                 @if($schedule->penalty_amount == 0)

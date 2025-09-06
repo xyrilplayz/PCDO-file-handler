@@ -132,7 +132,7 @@ class Checklist extends Controller
         $uploadedCount = CooperativeUploads::where('cooperative_id', $cooperativeId)->count();
 
         // ⚠️ for production use >=
-        if ($uploadedCount = $requiredItems) {
+        if ($uploadedCount <= $requiredItems) {
             $existingLoan = Loan::where('cooperative_id', $cooperativeId)
                 ->where('program_id', $cooperative->program_id)
                 ->first();
