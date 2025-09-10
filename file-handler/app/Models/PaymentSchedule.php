@@ -35,6 +35,8 @@ class PaymentSchedule extends Model
     }
     protected $dates = ['due_date']; 
 
+    
+
 }
 
 ?>

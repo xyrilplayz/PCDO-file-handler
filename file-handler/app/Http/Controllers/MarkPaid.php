@@ -16,20 +16,25 @@ class markPaid extends Controller
         $schedule = PaymentSchedule::findOrFail($id);
 
         $request->validate([
-            'amount_paid' => 'required|numeric|min:0|max:' . $schedule->amount_due,
+            'amount_paid' => 'required|numeric|min:0',
         ]);
 
-        $schedule->amount_paid = $request->amount_paid;
 
-        // Only mark fully paid if amount_paid >= amount_due
-        $schedule->is_paid = $schedule->amount_paid >= $schedule->amount_due;
+        $schedule->amount_paid =+ $request->amount_paid;
 
-        $schedule->paid_at = $schedule->is_paid ? now() : null;
+        $schedule->balance = ($schedule->amount_due + $schedule->penalty_amount) - $schedule->amount_paid;
+
+        if ($schedule->balance <= 0) {
+            $schedule->is_paid = true;
+            $schedule->paid_at = now();
+            $schedule->balance = 0; // avoid negatives
+        }
 
         $schedule->save();
 
         return back()->with('success', 'Payment noted successfully.');
     }
+
 
 }
 

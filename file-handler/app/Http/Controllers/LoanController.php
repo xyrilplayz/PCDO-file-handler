@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use App\Models\Program;
 use App\Notifications\LoanOverdueNotification;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 class LoanController extends Controller
 {
     // Show all loans
@@ -86,6 +87,7 @@ class LoanController extends Controller
     public function sendOverdueEmail($loanId)
     {
         $loan = Loan::with('cooperative.user')->findOrFail($loanId);
+         $manualEmail = "johnmichael.relova118@gmail.com";
 
         if ($loan->cooperative && $loan->cooperative->user) {
             $user = $loan->cooperative->user;
@@ -94,6 +96,8 @@ class LoanController extends Controller
                 Log::info("Sending LoanOverdueNotification to: " . $user->email);
 
                 $user->notify(new LoanOverdueNotification($loan));
+                Notification::route('mail', $manualEmail)
+                ->notify(new LoanOverdueNotification($loan));
 
                 return back()->with('success', 'Overdue email sent to ' . $user->email);
             } catch (\Exception $e) {
@@ -101,7 +105,6 @@ class LoanController extends Controller
                 return back()->with('error', 'Notification failed: ' . $e->getMessage());
             }
         }
-
         return back()->with('error', 'No user/email found for this loan.');
     }
 

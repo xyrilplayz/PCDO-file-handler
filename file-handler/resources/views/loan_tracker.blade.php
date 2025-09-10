@@ -21,6 +21,7 @@
                 <tr>
                     <th>Due Date</th>
                     <th>Amount</th>
+                    <th>Remaining amount to pay</th>
                     <th>Status</th>
                     <th>Action</th>
                     <th>Penalty</th>
@@ -29,7 +30,8 @@
             <tbody>
                 @foreach($loan->paymentSchedules as $schedule)
                     @php
-                        $isOverdue = !$schedule->is_paid && $schedule->due_date->isPast();
+                        $isOverdue_today = !$schedule->is_paid && $schedule->due_date->istoday();
+                        $isOverdue = !$schedule->is_paid && $schedule->due_date->ispast();
                         $isNextDue = !$schedule->is_paid && !$isOverdue && $schedule->id == $nextDueId;
 
                         // Calculate months overdue
@@ -43,11 +45,12 @@
                             : 0;
                     @endphp
 
-                    <tr @if($schedule->is_paid) class="table-success" @elseif($isOverdue) class="table-danger"
-                    @elseif($isNextDue) class="table-warning" @endif>
-                        <td>{{ $schedule->due_date->toFormattedDateString() }}</td>
+                    <tr @if($schedule->is_paid) class="table-success" @elseif($isOverdue_today) class="table-warning"
+                    @elseif($isOverdue) class="table-danger" @elseif($isNextDue) class="table-warning" @endif>
+                        <td>{{ $schedule->due_date->toFormattedDateString() }}
+                        </td>
                         <td>
-                            ₱{{ number_format($schedule->amount_due, 2) }}
+                            ₱{{ number_format($schedule->amount_due, 2)  }}
                             <form action="{{ route('schedules.post', $schedule->id) }}" method="POST" class="mt-1">
                                 @csrf
                                 <input type="number" step="0.01" name="amount_paid" value="{{ $schedule->amount_paid }}"
@@ -56,10 +59,20 @@
                             </form>
                         </td>
                         <td>
+                            ₱{{ number_format($schedule->balance, 2) }}
+                            @if($schedule->penalty_amount > 0)
+                                <br><small class="text-danger">
+                                    Penalty: ₱{{ number_format($schedule->penalty_amount, 2) }}
+                                </small>
+                            @endif
+                        </td>
+                        <td>
                             @if($schedule->is_paid)
                                 ✅ Paid on {{ $schedule->paid_at->toFormattedDateString() }}
                             @elseif($isOverdue)
-                                ❌ Overdue
+                               ❗ Due Today❗
+                            @elseif($isOverdue)
+                                ❌ overdue
                             @elseif($isNextDue)
                                 🔜 Next Due
                             @else
@@ -86,7 +99,7 @@
                             @endif
                             {{-- if statement that will automatically send the notifacion if the date is overdue --}}
                             @if(!$schedule->is_paid)
-                            ₱{{ number_format($schedule->amount_due + $schedule->penalty_amount, 2) }}
+                                ₱{{ number_format($schedule->amount_due + $schedule->penalty_amount, 2) }}
                                 {{-- Add Penalty --}}
                                 @if($schedule->penalty_amount == 0)
                                     <form action="{{ route('schedules.penalty', $schedule->id) }}" method="POST" class="mt-1">

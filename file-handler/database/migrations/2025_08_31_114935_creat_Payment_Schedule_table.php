@@ -15,6 +15,7 @@ return new class extends Migration {
             $table->date('paid_at')->nullable();
             $table->decimal('amount_paid', 12, 2)->default(0); // Track actual paid
             $table->decimal('penalty_amount', 12, 2)->default(0);
+            $table->decimal('balance', 12, 2)->default(0);
             $table->timestamps();
         });
     }

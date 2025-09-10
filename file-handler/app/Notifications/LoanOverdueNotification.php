@@ -26,6 +26,8 @@ class LoanOverdueNotification extends Notification
     public function toMail($notifiable)
     {
 
+        $greetingName = $notifiable->name ?? 'PCDO';
+
         $dueSchedule = $this->loan->paymentSchedules()
             ->where('is_paid', false)
             ->orderBy('due_date', 'asc')
@@ -34,26 +36,9 @@ class LoanOverdueNotification extends Notification
         if (!$dueSchedule) {
             return (new MailMessage)
                 ->subject('Loan Payment Status')
-                ->greeting('Hello ' . $notifiable->name . ',')
+                ->greeting('Hello ' . $greetingName . ',')
                 ->line('Currently, you have no upcoming or overdue payments.');
         }
-
-        // Work out the status message
-        if ($dueSchedule->due_date->isToday()) {
-            $statusText = "Your payment is due today.";
-        } else {
-            $daysLeft = now()->diffInDays($dueSchedule->due_date, false);
-            if ($daysLeft = 3) {
-                $days = intval($daysLeft);
-                $statusText = "Your payment is due in {$days} day(s).";
-            } elseif ($daysLeft < 0) {
-                $days = intval($daysLeft);
-                $statusText = "Your payment is overdue by " . abs($days) . " day(s).";
-            } else {
-                $statusText = "Your payment is due today.";
-            }
-        }
-
         $dueDateText = $dueSchedule->due_date->format('F d, Y');
 
         // Total due (without penalties)
@@ -71,16 +56,43 @@ class LoanOverdueNotification extends Notification
                 return ($schedule->amount_due * 0.01) + $schedule->amount_due;
             });
 
-
-
-        return (new MailMessage)
-            ->subject('Loan Payment Reminder')
-            ->greeting('Hello ' . $notifiable->name . ',')
-            ->line($statusText)
-            ->line('Due Date: ' . $dueDateText)
-            ->line('Amount to pay: ₱' . number_format($totalDue, 2))
-            ->line('Amount to pay with penalty: ₱' . number_format($penalty, 2))
-            ->line('Please settle your payment as soon as possible to avoid additional penalties.');
+        // Work out the status message
+        if ($dueSchedule->due_date->isToday()) {
+            $statusText = "Your payment is due today.";
+            return (new MailMessage)
+                ->subject('Loan Payment Reminder')
+                ->greeting('Hello ' . $greetingName. ',')
+                ->line($statusText)
+                ->line('Due Date: ' . $dueDateText)
+                ->line('Please settle your payment as soon as possible to avoid additional penalties.');
+        } else {
+            $daysLeft = now()->diffInDays($dueSchedule->due_date, false);
+            if ($daysLeft == 3) {
+                $days = intval($daysLeft);
+                $statusText = "Your payment is due in {$days} day(s).";
+                return (new MailMessage)
+                    ->subject('Loan Payment Reminder')
+                    ->greeting('Hello ' . $greetingName . ',')
+                    ->line($statusText)
+                    ->line('Due Date: ' . $dueDateText)
+                    ->line('Amount to pay: ₱' . number_format($totalDue, 2))
+                    ->line('Amount to pay with penalty: ₱' . number_format($penalty, 2))
+                    ->line('Please settle your payment as soon as possible to avoid additional penalties.');
+            } elseif ($daysLeft < 0) {
+                $days = intval($daysLeft);
+                $statusText = "Your payment is overdue by " . abs($days) . " day(s).";
+                return (new MailMessage)
+                    ->subject('Loan Payment Reminder')
+                    ->greeting('Hello ' . $greetingName . ',')
+                    ->line($statusText)
+                    ->line('Due Date: ' . $dueDateText)
+                    ->line('Amount to pay: ₱' . number_format($totalDue, 2))
+                    ->line('Amount to pay with penalty: ₱' . number_format($penalty, 2))
+                    ->line('Please settle your payment as soon as possible to avoid additional penalties.');
+            } else {
+                $statusText = "Your payment is due today.";
+            }
+        }
     }
 
 
