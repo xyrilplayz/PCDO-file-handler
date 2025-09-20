@@ -1,10 +1,13 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
+use App\Console\Commands\ExportCompletedLoans;
 use Illuminate\Support\Facades\Artisan;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+
+
+Artisan::command('loans:export-completed', function () {
+    $this->call('export:completed-loans');
+});
 
 Schedule::command('notification:process')->everyMinute();
+Schedule::command('export:completed-loans')->everyMinute();

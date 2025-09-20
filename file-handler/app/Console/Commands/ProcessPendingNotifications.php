@@ -3,11 +3,10 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\pending_notifications;
-use App\Models\PaymentSchedule;
+use App\Models\PendingNotification;
 use App\Notifications\LoanOverdueNotification;
+use Illuminate\Support\Facades\Notification;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
-
 
 class ProcessPendingNotifications extends Command
 {
@@ -16,32 +15,45 @@ class ProcessPendingNotifications extends Command
 
     public function handle()
     {
-        // Get all unprocessed notifications
-        $notifications = pending_notifications::where('processed', 0)->get();
+        // Fetch unprocessed notifications
+        $notifications = PendingNotification::where('processed', 0)->get();
+
+        if ($notifications->isEmpty()) {
+            $this->info('No pending notifications to process.');
+            return SymfonyCommand::SUCCESS;
+        }
 
         foreach ($notifications as $notif) {
-            $schedule = PaymentSchedule::find($notif->schedule_id);
+            $schedule = $notif->schedule;
 
             if (!$schedule) {
-                $this->error("Schedule {$notif->schedule_id} not found");
+                $this->error("Schedule ID {$notif->schedule_id} not found.");
                 continue;
             }
 
-            $loan = $schedule->loan;
-            $coop = $loan->cooperative;
+            $coopProgram = $schedule->coopProgram;
+            $email = $coopProgram?->email;
+            $coopName = $coopProgram?->name ?? 'Unknown Coop Program';
 
-            // Assuming cooperative has a user/staff contact email
-            if ($coop && $coop->user) {
-                $coop->user->notify(new LoanOverdueNotification($loan));
-                $this->info("✅ Notification sent for coop: {$coop->name}, type: {$notif->type}");
+            if ($email) {
+                try {
+                    // Send notification using the updated LoanOverdueNotification
+                    Notification::route('mail', $email)
+                        ->notify(new LoanOverdueNotification($schedule));
 
-                // Mark as processed
-                $notif->processed = 1;
-                $notif->save();
+                    $this->info("✅ Notification sent to {$email} for {$coopName}, type: {$notif->type}");
+
+                    // Mark notification as processed
+                    $notif->processed = 1;
+                    $notif->save();
+                } catch (\Exception $e) {
+                    $this->error("❌ Failed to send notification to {$email}: " . $e->getMessage());
+                }
+            } else {
+                $this->warn("❌ No email found for coop program ID {$schedule->coop_program_id}");
             }
         }
 
         return SymfonyCommand::SUCCESS;
-
     }
 }

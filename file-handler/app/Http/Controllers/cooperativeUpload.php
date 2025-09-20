@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CooperativeUploads;
+use App\Models\CoopProgramChecklist;
 use Illuminate\Http\Request;
 
 class CooperativeUpload extends Controller
@@ -22,9 +22,9 @@ class CooperativeUpload extends Controller
         $safeName = mb_convert_encoding($originalName, 'UTF-8', 'UTF-8'); // enforce UTF-8
         $safeName = preg_replace('/[^\x20-\x7E]/', '', $safeName); // remove weird chars
 
-        CooperativeUploads::create([
-            'cooperative_id' => $request->cooperative_id,
-            'checklist_item_id' => $request->checklist_item_id,
+        CoopProgramChecklist::create([
+            'coop_program_id' => $request->cooperative_id,
+            'program_checklist_id' => $request->checklist_item_id,
             'file_name' => $safeName,
             'mime_type' => $file->getClientMimeType(),
             'file_content' => base64_encode(file_get_contents($file->getRealPath())),
