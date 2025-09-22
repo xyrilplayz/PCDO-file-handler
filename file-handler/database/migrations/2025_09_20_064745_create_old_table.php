@@ -12,10 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('old', function (Blueprint $table) {
-            $table->id();
-            $table->binary('file_content')->nullable();
-            $table->timestamps();
-        });
+        $table->id();
+        $table->foreignId('coop_program_id')->constrained()->onDelete('cascade');
+        $table->binary('file_content')->nullable();
+        $table->timestamps();
+    });
+    
     }
 
     /**

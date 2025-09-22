@@ -22,4 +22,9 @@ class Programs extends Model
         return $this->belongsToMany(Checklists::class, 'program_checklists', 'program_id', 'checklist_id')->withPivot('id');
     }
 
+     public function coopProgram()
+    {
+        return $this->hasMany(CoopProgram::class, 'program_id');
+    }
+
 }

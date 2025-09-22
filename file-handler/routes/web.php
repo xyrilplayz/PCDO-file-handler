@@ -46,7 +46,8 @@ Route::group(['middleware' => 'auth'], function () {
         ->name('cooperatives.show');
 
     //creating programs for cooperatives
-    Route::get('/program', [CoopProgramController::class, 'index'])->name('program.index');
+    Route::get('/coop-program/{coopProgram}', [CoopProgramController::class, 'show'])->name('coop_program.show');
+
     Route::get('/program/create', [CoopProgramController::class, 'create'])->name('program.create');
     Route::post('/program', [CoopProgramController::class, 'store'])->name('program.store');
     Route::get('/checklist/{coopProgramid}', [CoopProgramChecklistcontroller::class, 'show'])->name('checklists.show');
@@ -69,9 +70,11 @@ Route::group(['middleware' => 'auth'], function () {
     )->name('schedules.sendOverdueEmail');
 
 
-    Route::get('/old', [OldCsvController::class, 'index'])->name('old.index');
-    Route::get('/old/view/{id}', [OldCsvController::class, 'view'])->name('old.view');
-    Route::get('/old/download/{id}', [OldCsvController::class, 'download'])->name('old.download');
+    Route::get('/old', [OldCSVController::class, 'index'])->name('old.index');
+    Route::get('/old/{coopProgram}', [OldCSVController::class, 'show'])->name('old.show');
+    Route::get('/old/file/{id}/view', [OldCSVController::class, 'view'])->name('old.view');
+    Route::get('/old/file/{id}/download', [OldCSVController::class, 'download'])->name('old.download');
+
 
 
     Route::resource('loans', LoanController::class);

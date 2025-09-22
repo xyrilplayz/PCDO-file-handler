@@ -1,15 +1,22 @@
 @extends('layout')
 
 @section('content')
-<h2>CSV Preview</h2>
-<table border="1" cellpadding="5">
-    @foreach ($rows as $row)
-        <tr>
-            @foreach ($row as $cell)
-                <td>{{ $cell }}</td>
+<div class="container mt-4">
+    <h3>CSV File: {{ $record->coopProgram->cooperative->name }} - {{ $record->coopProgram->program->name }}</h3>
+
+    <table class="table table-bordered">
+        <tbody>
+            @foreach($rows as $row)
+                <tr>
+                    @foreach($row as $col)
+                        <td>{{ $col }}</td>
+                    @endforeach
+                </tr>
             @endforeach
-        </tr>
-    @endforeach
-</table>
-<a href="{{ url()->previous() }}">Back</a>
+        </tbody>
+    </table>
+
+    <a href="{{ route('old.download', $record->id) }}" class="btn btn-success">Download CSV</a>
+    <a href="{{ url()->previous() }}" class="btn btn-secondary">Back</a>
+</div>
 @endsection

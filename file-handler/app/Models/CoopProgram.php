@@ -49,6 +49,11 @@ class CoopProgram extends Model
         return $this->hasMany(CoopProgramChecklist::class);
     }
 
+    public function olds()
+    {
+        return $this->hasMany(Old::class);
+    }
+
 
 
     public function user()

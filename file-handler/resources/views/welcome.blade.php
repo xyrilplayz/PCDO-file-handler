@@ -14,7 +14,7 @@
         </div>
 
         <div><a href="{{ route('old.index') }}" class="btn btn-primary align-items-center mb-3">
-                 View Done Programs
+                View Done Programs
             </a>
         </div>
 
@@ -24,7 +24,7 @@
                     <th>#id</th>
                     <th>Name</th>
                     <th>Type</th>
-                    <th>Avail Program</th>
+                    <th>Availed Program</th>
                 </tr>
             </thead>
             <tbody>
@@ -33,6 +33,7 @@
                         <td>{{ $coop->id }}</td>
                         <td>{{ $coop->name }}</td>
                         <td>{{ $coop->type }}</td>
+
                         <td>
                             <a href="{{ route('cooperatives.show', $coop->id) }}" class="btn btn-primary">
                                 View

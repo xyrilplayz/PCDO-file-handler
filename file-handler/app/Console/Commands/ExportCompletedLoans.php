@@ -76,6 +76,7 @@ class ExportCompletedLoans extends Command
 
         // Save CSV as binary in `old` table
         Old::create([
+            'coop_program_id' => $coopProgram->id,
             'file_content' => $csvContent,
         ]);
 

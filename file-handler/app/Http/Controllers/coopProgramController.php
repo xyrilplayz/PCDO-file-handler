@@ -86,14 +86,17 @@ class CoopProgramController extends Controller
         return redirect()->route('login.post', $coopProgram->id)
             ->with('success', 'Program enrolled successfully. Please upload required documents.');
     }
-    
+
 
     /**
      * Display the specified resource.
      */
     public function show(CoopProgram $coopProgram)
     {
-        return view('coop-program.show', compact('coopProgram'));
+        // Load related data if needed
+        $coopProgram->load(['program', 'cooperative', 'ammortizationSchedules']);
+
+        return view('coop-program', compact('coopProgram'));
     }
 
     /**
