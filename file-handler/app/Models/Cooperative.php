@@ -35,7 +35,7 @@ class Cooperative extends Model
         return $this->hasMany(Cooperative::class, 'holder');
     }
 
-    public function details()
+    public function detail()
     {
         return $this->hasOne(CoopDetail::class, 'coop_id', 'id');
     }

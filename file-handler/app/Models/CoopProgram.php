@@ -54,7 +54,15 @@ class CoopProgram extends Model
         return $this->hasMany(Old::class);
     }
 
+    public function detail()
+    {
+        return $this->hasOne(CoopDetail::class, 'coop_id');
+    }
 
+    public function members()
+    {
+        return $this->hasMany(CoopMember::class, 'coop_id');
+    }
 
     public function user()
     {

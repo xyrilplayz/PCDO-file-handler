@@ -10,15 +10,19 @@ use carbon\Carbon;
 use App\Models\Old;
 class ExportCompletedLoans extends Command
 {
-    protected $signature = 'export:completed-loans'; // <-- this is the command name
+    protected $signature = 'export:completed-loans';
     protected $description = 'Export fully paid cooperative loans to CSV';
-
 
     public function handle()
     {
         $this->info('Running export...');
 
-        $coopPrograms = CoopProgram::with(['ammortizationSchedules', 'program', 'cooperative'])
+        $coopPrograms = CoopProgram::with([
+            'ammortizationSchedules',
+            'program',
+            'cooperative.detail',
+            'cooperative.members'
+        ])
             ->where('program_status', 'Finished')
             ->get();
 
@@ -33,19 +37,28 @@ class ExportCompletedLoans extends Command
             if (!$allPaid)
                 continue;
 
-            // Loan summary
-            $csvData[] = ['field' => 'cooperative_name', 'value' => $coopProgram->cooperative->name ?? 'Unknown Cooperative'];
-            $csvData[] = ['field' => 'program_name', 'value' => $coopProgram->program->name];
-            $csvData[] = ['field' => 'loan_amount', 'value' => $coopProgram->loan_ammount];
-            $csvData[] = ['field' => 'start_date', 'value' => $coopProgram->start_date->format('Y-m-d')];
-            $csvData[] = ['field' => 'grace_period', 'value' => $coopProgram->with_grace];
-            $csvData[] = ['field' => 'term_months', 'value' => $coopProgram->program->term_months];
+            $coop = $coopProgram->cooperative;
 
+            // from coop_detail
+            $address = $coop->detail->address ?? 'Unknown Address';
+            $contact = $coop->detail->contact_number ?? 'N/A';
+
+            // from coop_members
+            $chairman = $coop->members->firstWhere('position', 'Chairman')->last_name ?? 'N/A';
+            $treasurer = $coop->members->firstWhere('position', 'Treasurer')->last_name ?? 'N/A';
+            $manager = $coop->members->firstWhere('position', 'Manager')->last_name ?? 'N/A';
+
+            // Loan summary
+            $csvData[] = ['Cooperative_name', $coop->name ?? 'Unknown Cooperative', 'Address', $address];
+            $csvData[] = ['Program_name', $coopProgram->program->name, 'Coop Chairman', $chairman];
+            $csvData[] = ['Loan_amount', $coopProgram->loan_ammount, 'Coop Treasurer', $treasurer];
+            $csvData[] = ['Start_date', $coopProgram->start_date->format('Y-m-d'), 'Coop Manager', $manager];
+            $csvData[] = ['Grace_period', $coopProgram->with_grace, 'Contact Number', $contact];
+            $csvData[] = ['Term_months', $coopProgram->program->term_months, 'Project', $coopProgram->program->project ?? 'N/A'];
             $csvData[] = []; // blank row
 
             // Schedule header
             $csvData[] = ['due_date', 'installment', 'date_paid', 'amount_paid', 'status'];
-
             foreach ($schedules as $schedule) {
                 $csvData[] = [
                     $schedule->due_date->format('Y-m-d'),
