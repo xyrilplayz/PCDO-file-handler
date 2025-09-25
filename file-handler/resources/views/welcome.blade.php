@@ -38,7 +38,7 @@
                             <a href="{{ route('cooperatives.show', $coop->id) }}" class="btn btn-primary">
                                 View
                             </a>
-                            @foreach($coop->coopPrograms as $coopProgram)
+                            @foreach($coop->coopProgram as $coopProgram)
                                 <a href="{{ route('checklists.show', $coopProgram->id) }}" class="btn btn-secondary mt-1">
                                     View checklist for {{ $coopProgram->program->name }}
                                 </a>

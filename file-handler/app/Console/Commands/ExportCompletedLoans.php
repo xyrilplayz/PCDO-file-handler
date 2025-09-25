@@ -92,6 +92,7 @@ class ExportCompletedLoans extends Command
             'coop_program_id' => $coopProgram->id,
             'file_content' => $csvContent,
         ]);
+        $coopProgram->ammortizationSchedules()->delete();
 
         $this->info('✅ CSV exported and saved to the old table successfully!');
     }

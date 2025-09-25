@@ -61,8 +61,8 @@ class AmmortizationScheduleController extends Controller
 
         // 🔍 5. Compute installment
         $amountPerMonth = round($coopProgram->loan_ammount / $monthsToPay, 2);
-        $startDate = Carbon::parse($coopProgram->start_date)
-            ->addMonths($coopProgram->with_grace);
+        $startDate = now()->addMonths($coopProgram->with_grace);
+
 
         // 🔍 6. Create ammortization schedule
         for ($i = 1; $i <= $monthsToPay; $i++) {
