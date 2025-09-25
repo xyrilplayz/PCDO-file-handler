@@ -113,7 +113,7 @@ class AmmortizationScheduleController extends Controller
 
         if ($programEmail) {
             Notification::route('mail', $programEmail)
-                ->notify(new LoanOverdueNotification($coopProgram)); // ✅ pass CoopProgram
+                ->notify(new LoanOverdueNotification($schedule)); 
 
             return back()->with('success', 'Overdue email sent to ' . $programEmail);
         }

@@ -25,7 +25,7 @@ class Cooperative extends Model
     {
         return $this->belongsTo(Cooperative::class, 'holder');
     }
-     public function coopPrograms()
+     public function coopProgram()
     {
         return $this->hasMany(CoopProgram::class, 'coop_id', 'id');
     }

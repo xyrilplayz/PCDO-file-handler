@@ -24,9 +24,14 @@ class LoanOverdueNotification extends Notification
 
     public function toMail($notifiable)
     {
-        $greetingName = $notifiable->name ?? 'PCDO';
+
         $schedule = $this->schedule;
         $coopProgram = $schedule->coopProgram;
+        $greetingName = $coopProgram->cooperative->name ?? 'PCDO';
+        
+
+
+
 
         $dueDateText = $schedule->due_date->format('F d, Y');
 
@@ -51,7 +56,7 @@ class LoanOverdueNotification extends Notification
             ->subject('Loan Payment Reminder')
             ->greeting('Hello ' . $greetingName . ',')
             ->line($statusText)
-            ->line('Coop Program: ' . ($coopProgram?->name ?? 'Unknown'))
+            ->line('Coop Program: ' . ($coopProgram->program->name ?? 'Unknown'))
             ->line('Due Date: ' . $dueDateText)
             ->line('Amount to pay: ₱' . number_format($totalDue, 2))
             ->line('Amount to pay with penalty: ₱' . number_format($penalty, 2))

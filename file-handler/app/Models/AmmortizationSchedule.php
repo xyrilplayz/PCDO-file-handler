@@ -19,8 +19,8 @@ class AmmortizationSchedule extends Model
     ];
 
     protected $casts = [
-        'due_date' => 'date',
-        'date_paid' => 'date',
+        'due_date' => 'datetime',
+        'date_paid' => 'datetime',
     ];
 
     public function markPaid()
