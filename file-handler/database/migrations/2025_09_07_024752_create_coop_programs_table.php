@@ -1,5 +1,6 @@
 <?php
 
+use Faker\ChanceGenerator;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -21,8 +22,8 @@ return new class extends Migration {
             $table->boolean('exported')->default(false);
             $table->string('number')->nullable();
             $table->string('email');           // NOT nullable
-            $table->integer('loan_ammount');
-            $table->integer('with_grace')->default(4);
+            $table->integer('loan_ammount')->nullable();
+            $table->integer('with_grace')->nullable();
             $table->timestamps();
         });
     }

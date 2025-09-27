@@ -18,6 +18,7 @@ class CoopProgram extends Model
         'start_date',
         'end_date',
         'program_status',
+        'number',
         'email',
         'loan_ammount',
         'with_grace'
@@ -44,7 +45,7 @@ class CoopProgram extends Model
         return $this->belongsTo(Programs::class, 'program_id');
     }
 
-    public function checklist()
+    public function checklists()
     {
         return $this->hasMany(CoopProgramChecklist::class);
     }

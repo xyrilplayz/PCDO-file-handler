@@ -51,7 +51,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/program/create', [CoopProgramController::class, 'create'])->name('program.create');
     Route::post('/program', [CoopProgramController::class, 'store'])->name('program.store');
     Route::get('/checklist/{coopProgramid}', [CoopProgramChecklistcontroller::class, 'show'])->name('checklists.show');
-
+    Route::post('/program/{coopProgram}/finalize', [CoopProgramController::class, 'finalizeLoan'])->name('program.finalizeLoan');
 
     //search upload
     Route::post('/checklist/{cooperative}/upload', [CoopProgramChecklistcontroller::class, 'upload'])->name('checklist.upload');

@@ -2,67 +2,38 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ProgramChecklists;
 use Illuminate\Http\Request;
 use App\Models\CoopProgram;
-use App\Models\CooperativeUploads;
-use App\Models\Cooperative;
 use App\Models\Checklists;
-use App\Models\Loan;
 use App\Models\CoopProgramChecklist;
-class CoopProgramChecklistcontroller extends Controller
+
+class CoopProgramChecklistController extends Controller
 {
-    // public function show($coopProgramid)
-    // {
-    //     $cooperative = CoopProgram::with(['program', 'cooperative'])
-    //         ->findOrFail($coopProgramid);
+    /**
+     * Show the checklist for a coop program.
+     */
+    public function show($coopProgramId)
+    {
+        $coopProgram = CoopProgram::with(['program', 'cooperative'])->findOrFail($coopProgramId);
 
-    //     // Base query with uploads filtered by coop_program_id
-    //     $query = Checklists::with([
-    //         'uploads' => function ($q) use ($coopProgramid) {
-    //             $q->where('coop_program_id', $coopProgramid);
-    //         }
-    //     ]);
+        // base checklist items
+        $checklistItems = $coopProgram->program->checklists;
 
-    //     // Apply conditions based on program_id
-    //     if (in_array($cooperative->program_id, [3, 5])) {
-    //         $checklistItems = $query->get(); // all checklist items
-    //     } else {
-    //         $checklistItems = $query->whereBetween('id', [1, 24])->get();
-    //     }
-
-    //     return view('checklist', compact('cooperative', 'checklistItems'));
-    // }
-
-    //ito ung pag same lng na checklist for each program
-    public function show($coopProgramid)
-{
-    $cooperative = CoopProgram::with(['program', 'cooperative'])
-        ->findOrFail($coopProgramid);
-
-    // Get ALL coop_program IDs for this cooperative + program (USAD etc.)
-    $coopProgramIds = CoopProgram::where('coop_id', $cooperative->coop_id)
-        ->where('program_id', $cooperative->program_id)
-        ->pluck('id');
-
-    // Base query with uploads across all availments of this program
-    $query = Checklists::with([
-        'uploads' => function ($q) use ($coopProgramIds) {
-            $q->whereIn('coop_program_id', $coopProgramIds);
+        // Add conditional logic by program name
+        if ($coopProgram->program->name === 'USAD SULONG COPSE') {
+            $checklistItems = $checklistItems->take(24); // only 24
+        } elseif (in_array($coopProgram->program->name, ['LICAP', 'PCLRP'])) {
+            $checklistItems = $checklistItems->take(26); // 26
         }
-    ]);
 
-    // Apply conditions based on program_id
-    if (in_array($cooperative->program_id, [3, 5])) {
-        $checklistItems = $query->get(); // all checklist items
-    } else {
-        $checklistItems = $query->whereBetween('id', [1, 24])->get();
+        return view('checklist', [
+            'cooperative' => $coopProgram,
+            'checklistItems' => $checklistItems,
+        ]);
     }
-
-    return view('checklist', compact('cooperative', 'checklistItems'));
-}
-
-
+    /**
+     * Upload a file for a checklist item.
+     */
     public function upload(Request $request, $coopProgramId)
     {
         $request->validate([
@@ -72,7 +43,7 @@ class CoopProgramChecklistcontroller extends Controller
 
         $file = $request->file('file');
 
-        // Check if this CoopProgram already has an upload for this checklist item
+        // Replace old file if exists
         $existingUpload = CoopProgramChecklist::where('coop_program_id', $coopProgramId)
             ->where('program_checklist_id', $request->program_checklist_id)
             ->first();
@@ -81,7 +52,6 @@ class CoopProgramChecklistcontroller extends Controller
             $existingUpload->delete();
         }
 
-        // Save the new upload
         CoopProgramChecklist::create([
             'coop_program_id' => $coopProgramId,
             'program_checklist_id' => $request->program_checklist_id,
@@ -90,19 +60,12 @@ class CoopProgramChecklistcontroller extends Controller
             'file_content' => file_get_contents($file->getRealPath()),
         ]);
 
-
-        return back()->with('success', 'File uploaded successfully and old file replaced!');
+        return back()->with('success', 'File uploaded successfully!');
     }
 
-    public function delete($id)
-    {
-        $upload = CoopProgramChecklist::findOrFail($id);
-        $upload->delete();
-
-        return back()->with('success', 'File deleted successfully!');
-
-    }
-
+    /**
+     * Download a file.
+     */
     public function download($id)
     {
         $upload = CoopProgramChecklist::findOrFail($id);
@@ -112,63 +75,14 @@ class CoopProgramChecklistcontroller extends Controller
             ->header('Content-Disposition', 'attachment; filename="' . $upload->file_name . '"');
     }
 
-
-
-    public function searchUploads(Request $request)
+    /**
+     * Delete an uploaded file.
+     */
+    public function delete($id)
     {
-        $query = CooperativeUploads::query()
-            ->with(['cooperative.program', 'checklistItem']);
+        $upload = CoopProgramChecklist::findOrFail($id);
+        $upload->delete();
 
-        if ($request->filled('program_id')) {
-            $query->whereHas('cooperative', function ($q) use ($request) {
-                $q->where('program_id', $request->program_id);
-            });
-        }
-
-        if ($request->filled('search')) {
-            $query->whereHas('cooperative', function ($q) use ($request) {
-                $q->where('name', 'LIKE', '%' . $request->search . '%');
-            });
-        }
-
-        $uploads = $query->paginate(10);
-        $programs = \App\Models\Program::all();
-
-        return view('checklist_search_uploads', compact('uploads', 'programs'));
+        return back()->with('success', 'File deleted successfully!');
     }
-    private function creatloan($cooperativeId)
-    {
-        $cooperative = Cooperative::with('program')->find($cooperativeId);
-
-        if (!$cooperative || !$cooperative->program) {
-            return;
-        }
-
-        $requiredItems = in_array($cooperative->program_id, [2, 5])
-            ? ChecklistItem::count()
-            : ChecklistItem::whereBetween('id', [1, 24])->count();
-
-        $uploadedCount = CooperativeUploads::where('cooperative_id', $cooperativeId)->count();
-
-        // ⚠️ for production use >=
-        if ($uploadedCount <= $requiredItems) {
-            $existingLoan = Loan::where('cooperative_id', $cooperativeId)
-                ->where('program_id', $cooperative->program_id)
-                ->first();
-
-            if (!$existingLoan) {
-                $loan = Loan::create([
-                    'cooperative_id' => $cooperativeId,
-                    'program_id' => $cooperative->program_id,
-                    'amount' => $cooperative->program->max_amount,
-                    'start_date' => now(),
-                    'grace_period' => $cooperative->with_grace,
-                    'term_months' => $cooperative->program->term_months,
-                ]);
-
-                $loan->generateSchedule();
-            }
-        }
-    }
-
 }
