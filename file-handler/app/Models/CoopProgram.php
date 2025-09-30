@@ -70,6 +70,11 @@ class CoopProgram extends Model
         return $this->belongsTo(User::class, 'user_id'); // adjust if your foreign key is different
     }
 
+    public function progressReports()
+    {
+        return $this->hasMany(CoopProgramProgress::class);
+    }
+
 
     function generateChecklists()
     {

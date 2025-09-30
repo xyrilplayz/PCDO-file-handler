@@ -19,6 +19,7 @@ use App\Http\Controllers\AmmortizationScheduleController;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\LoanOverdueNotification;
 use App\Http\Controllers\OldCsvController;
+use App\Http\Controllers\CoopProgramProgressController;
 
 
 
@@ -42,8 +43,14 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/createcooperative', [Cooperatives::class, 'creatcoopPost'])->name('cooperatives.post');
 
     //cooperative details
-    Route::get('/cooperatives/{id}', [CoopDetailsController::class, 'index'])
+     Route::get('/cooperatives/{id}', [Cooperative::class, 'index'])
         ->name('cooperatives.show');
+    Route::get('/cooperatives/{id}/details', [CoopDetailsController::class, 'index'])
+        ->name('cooperatives.details');
+    Route::get('/cooperatives/{id}', [Cooperatives::class, 'show'])->name('cooperative.show');
+    Route::post('/programs/{id}/archive', [CoopProgramController::class, 'archiveFinishedProgram'])
+    ->name('programs.archive');
+
 
     //creating programs for cooperatives
     Route::get('/coop-program/{coopProgram}', [CoopProgramController::class, 'show'])->name('coop_program.show');
@@ -75,9 +82,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/old/file/{id}/view', [OldCSVController::class, 'view'])->name('old.view');
     Route::get('/old/file/{id}/download', [OldCSVController::class, 'download'])->name('old.download');
 
-
-
-    Route::resource('loans', LoanController::class);
+    Route::get('/programs/{program}/documents/create', [CoopProgramProgressController::class, 'create'])->name('progress.index');
+    Route::post('/programs/{program}/documents', [CoopProgramProgressController::class, 'store'])->name('progress.store');
+    Route::get('/progress-reports/{report}/download', [CoopProgramProgressController::class, 'download'])->name('progress.download');
 
 
     //amount edits

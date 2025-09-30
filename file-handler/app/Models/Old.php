@@ -15,7 +15,12 @@ class Old extends Model
 
         public function coopProgram()
     {
-        return $this->belongsTo(CoopProgram::class);
+        return $this->belongsTo(CoopProgram::class,'coop_program_id');
+    }
+
+    public function cooperative()
+    {
+        return $this->belongsTo(Cooperative::class, 'coop_id');
     }
 
 }

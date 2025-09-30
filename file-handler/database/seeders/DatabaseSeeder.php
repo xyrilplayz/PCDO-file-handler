@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             ChecklistsSeeder::class,
             ProgramChecklistsSeeder::class,
             CoopProgramSeeder::class,
+            
         ]);
     }
 }

@@ -6,6 +6,10 @@
     <div class="container mt-4">
         <h2>{{ $coop->name }} ({{ ucfirst($coop->type) }})</h2>
 
+        <a href="{{ route('cooperative.show', $coop->id) }}" class="btn btn-primary">
+                                View
+                            </a>
+
         <table class="table table-bordered mt-3">
             <tr>
                 <th>ID</th>

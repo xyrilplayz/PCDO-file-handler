@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\CoopProgram;
+use App\Models\CoopProgramChecklist;
+use App\Models\FinishedCoopProgram;
+use App\Models\FinishedCoopProgramChecklist;
 use App\Models\Cooperative;
 use App\Models\Programs;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class CoopProgramController extends Controller
 {
@@ -91,7 +95,7 @@ class CoopProgramController extends Controller
             'loan_ammount' => 'required|numeric|min:1',
             'with_grace' => 'required|boolean',
         ]);
-        
+
         $program = $coopProgram->program;
         if ($request->loan_ammount < $program->min_amount || $request->loan_ammount > $program->max_amount) {
             return back()->withErrors([
@@ -131,5 +135,51 @@ class CoopProgramController extends Controller
     {
         $coopProgram->delete();
         return back()->with('success', 'Program deleted successfully!');
+    }
+
+    public function archiveFinishedProgram($coopProgramId)
+    {
+        DB::transaction(function () use ($coopProgramId) {
+            // 1. Get the coop program
+            $coopProgram = CoopProgram::with('checklists.uploads')->findOrFail($coopProgramId);
+
+            if ($coopProgram->program_status !== 'Finished' || $coopProgram->exported !== 1) {
+                throw new \Exception('Program must be finished and exported before archiving.');
+            }
+
+            // 2. Move CoopProgram to FinishedCoopProgram
+            $finished = FinishedCoopProgram::create([
+                'coop_id' => $coopProgram->coop_id,
+                'program_id' => $coopProgram->program_id,
+                'start_date' => $coopProgram->start_date,
+                'end_date' => $coopProgram->end_date,
+                'program_status' => $coopProgram->program_status,
+                'loan_amount' => $coopProgram->loan_amount,
+                'with_grace' => $coopProgram->with_grace,
+                'email' => $coopProgram->email,
+                'number' => $coopProgram->number,
+                'exported' => true,
+            ]);
+
+            // 3. Move Checklists + Uploads
+            foreach ($coopProgram->checklists as $checklist) {
+                foreach ($checklist->uploads as $upload) {
+                    FinishedCoopProgramChecklist::create([
+                        'finished_coop_program_id' => $finished->id,
+                        'checklist_id' => $checklist->checklist_id,
+                        'is_completed' => true,
+                        'file_name' => $upload->file_name,
+                        'mime_type' => $upload->mime_type,
+                        'file_content' => $upload->file_content,
+                    ]);
+                }
+            }
+
+            // 4. Delete original records
+            CoopProgramChecklist::where('coop_program_id', $coopProgram->id)->delete();
+            $coopProgram->delete();
+        });
+
+        return redirect()->route('programs.index')->with('success', 'Program archived successfully!');
     }
 }

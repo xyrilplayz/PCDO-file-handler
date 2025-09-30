@@ -11,3 +11,5 @@ Artisan::command('loans:export-completed', function () {
 
 Schedule::command('notification:process')->everyMinute();
 Schedule::command('export:completed-loans')->everyMinute();
+Schedule::command('archive:coop-programs')->everyMinute();
+// Schedule::command('cleanup:coop-programs')->everyMinute();

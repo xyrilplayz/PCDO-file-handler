@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->dateTime('end_date');
             $table->enum('program_status', ['Finished', 'Ongoing']);
             $table->boolean('exported')->default(false);
+            $table->boolean('archived')->default(false);
             $table->string('number')->nullable();
             $table->string('email');           // NOT nullable
             $table->integer('loan_ammount')->nullable();

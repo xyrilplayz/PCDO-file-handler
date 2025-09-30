@@ -25,7 +25,7 @@ class Cooperative extends Model
     {
         return $this->belongsTo(Cooperative::class, 'holder');
     }
-     public function coopProgram()
+    public function coopProgram()
     {
         return $this->hasMany(CoopProgram::class, 'coop_id', 'id');
     }
@@ -57,19 +57,26 @@ class Cooperative extends Model
         }
 
         if ($this->type === 'secondary') {
-            if (!$this->holder) return false;
+            if (!$this->holder)
+                return false;
             $parent = $this->parent ?? Cooperative::find($this->holder);
             return $parent && $parent->type === 'primary';
         }
 
         if ($this->type === 'tertiary') {
-            if (!$this->holder) return false;
+            if (!$this->holder)
+                return false;
             $parent = $this->parent ?? Cooperative::find($this->holder);
             return $parent && $parent->type === 'secondary';
         }
 
         return true;
     }
+    public function oldPrograms()
+    {
+        return $this->hasMany(Old::class, 'coop_program_id'); // if your table is literally named "old"
+    }
+
     protected static function boot()
     {
         parent::boot();
@@ -79,5 +86,16 @@ class Cooperative extends Model
                 throw new \Exception('Invalid cooperative hierarchy.');
             }
         });
+    }
+    public function progressReports()
+    {
+        return $this->hasManyThrough(
+            CoopProgramProgress::class,
+            CoopProgram::class,
+            'coop_id',        // Foreign key on coop_programs
+            'coop_program_id', // Foreign key on coop_program_progress
+            'id',             // Local key on cooperatives
+            'id'              // Local key on coop_programs
+        );
     }
 }

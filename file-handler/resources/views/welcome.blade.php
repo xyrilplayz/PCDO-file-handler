@@ -35,7 +35,7 @@
                         <td>{{ $coop->type }}</td>
 
                         <td>
-                            <a href="{{ route('cooperatives.show', $coop->id) }}" class="btn btn-primary">
+                            <a href="{{ route('cooperatives.details', $coop->id) }}" class="btn btn-primary">
                                 View
                             </a>
                             @foreach($coop->coopProgram as $coopProgram)

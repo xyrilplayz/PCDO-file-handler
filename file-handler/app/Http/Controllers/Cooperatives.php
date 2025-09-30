@@ -16,7 +16,7 @@ class Cooperatives extends Controller
     public function index()
     {
         $cooperatives = Cooperative::all(); // or paginate if many
-        return view('homepage', compact('cooperatives'));
+        return view('welcome', compact('cooperatives'));
     }
 
     // Show create form
@@ -59,7 +59,17 @@ class Cooperatives extends Controller
         return redirect()->route('cooperatives.create')
             ->with('success', 'Cooperative created successfully.');
     }
-    
+    public function show($id)
+    {
+        $cooperative = Cooperative::with([
+            'coopProgram.program',
+            'oldPrograms',
+            'progressReports'
+        ])->findOrFail($id);
+
+        return view('show-history', compact('cooperative'));
+    }
+
     // // Handle post request
     // public function creatcoopPost(Request $request)
     // {
