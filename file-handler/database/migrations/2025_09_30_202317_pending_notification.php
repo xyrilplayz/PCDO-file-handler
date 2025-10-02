@@ -15,17 +15,19 @@ return new class extends Migration {
 
             // schedule_id -> links to ammortization_schedules
             $table->foreignId('schedule_id')
-                  ->constrained('ammortization_schedules')
-                  ->onDelete('cascade');
+                ->constrained('ammortization_schedules')
+                ->onDelete('cascade');
 
             // coop_id -> must be string because cooperatives.id is string
             $table->string('coop_id');
             $table->foreign('coop_id')
-                  ->references('id')
-                  ->on('cooperatives')
-                  ->onDelete('cascade');
+                ->references('id')
+                ->on('cooperatives')
+                ->onDelete('cascade');
 
             $table->enum('type', ['due_today', 'due_soon', 'overdue']);
+            $table->string('subject')->nullable();
+            $table->longText('body')->nullable();
             $table->boolean('processed')->default(0);
             $table->timestamps();
         });

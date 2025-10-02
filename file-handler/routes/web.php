@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CoopProgramChecklistcontroller;
 use App\Http\Controllers\markPaid;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Programs;
 use App\Http\Controllers\xy;
 use App\Http\Controllers\Cooperatives;
@@ -43,13 +44,13 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/createcooperative', [Cooperatives::class, 'creatcoopPost'])->name('cooperatives.post');
 
     //cooperative details
-     Route::get('/cooperatives/{id}', [Cooperative::class, 'index'])
+    Route::get('/cooperatives/{id}', [Cooperative::class, 'index'])
         ->name('cooperatives.show');
     Route::get('/cooperatives/{id}/details', [CoopDetailsController::class, 'index'])
         ->name('cooperatives.details');
     Route::get('/cooperatives/{id}', [Cooperatives::class, 'show'])->name('cooperative.show');
     Route::post('/programs/{id}/archive', [CoopProgramController::class, 'archiveFinishedProgram'])
-    ->name('programs.archive');
+        ->name('programs.archive');
 
 
     //creating programs for cooperatives
@@ -81,6 +82,12 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/old/{coopProgram}', [OldCSVController::class, 'show'])->name('old.show');
     Route::get('/old/file/{id}/view', [OldCSVController::class, 'view'])->name('old.view');
     Route::get('/old/file/{id}/download', [OldCSVController::class, 'download'])->name('old.download');
+
+    //notifications
+    // routes/web.php
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{id}', [NotificationController::class, 'show'])->name('notifications.show');
+
 
     Route::get('/programs/{program}/documents/create', [CoopProgramProgressController::class, 'create'])->name('progress.index');
     Route::post('/programs/{program}/documents', [CoopProgramProgressController::class, 'store'])->name('progress.store');

@@ -39,9 +39,11 @@
                                 View
                             </a>
                             @foreach($coop->coopProgram as $coopProgram)
-                                <a href="{{ route('checklists.show', $coopProgram->id) }}" class="btn btn-secondary mt-1">
+                            @if ($coopProgram->program_status === 'Ongoing')
+                            <a href="{{ route('checklists.show', $coopProgram->id) }}" class="btn btn-secondary mt-1">
                                     View checklist for {{ $coopProgram->program->name }}
                                 </a>
+                            @endif
                             @endforeach
                         </td>
                     </tr>

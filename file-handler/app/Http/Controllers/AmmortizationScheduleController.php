@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\PendingNotification;
 use Illuminate\Http\Request;
 use App\Models\Programs;
 use App\Models\ProgramChecklists;
@@ -106,14 +107,14 @@ class AmmortizationScheduleController extends Controller
 
     public function sendOverdueEmail($scheduleId)
     {
-        $schedule = AmmortizationSchedule::with('coopProgram')->findOrFail($scheduleId);
-
+        $schedule = AmmortizationSchedule::with('coopProgram', 'pendingnotifications')->findOrFail($scheduleId);
         $coopProgram = $schedule->coopProgram; // must be a CoopProgram instance
         $programEmail = $coopProgram->email ?? null;
 
         if ($programEmail) {
             Notification::route('mail', $programEmail)
-                ->notify(new LoanOverdueNotification($schedule)); 
+                ->notify(new LoanOverdueNotification($schedule));
+
 
             return back()->with('success', 'Overdue email sent to ' . $programEmail);
         }

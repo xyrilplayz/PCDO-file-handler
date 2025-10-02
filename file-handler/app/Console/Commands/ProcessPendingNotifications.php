@@ -37,15 +37,20 @@ class ProcessPendingNotifications extends Command
 
             if ($email) {
                 try {
-                    // Send notification using the updated LoanOverdueNotification
-                    Notification::route('mail', $email)
-                        ->notify(new LoanOverdueNotification($schedule));
+                    // ✅ Build notification but intercept the MailMessage
+                    $notification = new LoanOverdueNotification($schedule);
+                    $mailMessage = $notification->toMail($schedule); // returns MailMessage
 
-                    $this->info("✅ Notification sent to {$email} for {$coopName}, type: {$notif->type}");
+                    // Send the notification
+                    Notification::route('mail', $email)->notify($notification);
 
-                    // Mark notification as processed
+                    // ✅ Save subject/body in PendingNotification before archiving
+                    $notif->subject   = $mailMessage->subject ?? 'Loan Notification';
+                    $notif->body      = implode("\n", $mailMessage->introLines ?? []);
                     $notif->processed = 1;
                     $notif->save();
+
+                    $this->info("✅ Notification sent to {$email} for {$coopName}, type: {$notif->type}");
                 } catch (\Exception $e) {
                     $this->error("❌ Failed to send notification to {$email}: " . $e->getMessage());
                 }

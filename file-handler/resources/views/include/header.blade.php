@@ -20,6 +20,7 @@
                 <a class="nav-link" href="{{ route('cooperatives.create') }}">Create</a>
               </li>
               <li>
+                <a class="nav-link" href="{{ route('notifications.index') }}">Notification</a>
               </li>
             @else
               <li class="nav-item">

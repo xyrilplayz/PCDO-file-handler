@@ -46,6 +46,17 @@ class AmmortizationSchedule extends Model
     {
         return $this->belongsTo(\App\Models\CoopProgram::class, 'coop_program_id');
     }
+
+    public function pendingnotifications()
+    {
+        return $this->hasOne(PendingNotification::class, 'schedule_id', 'id');
+    }
+
+    public function pendingNotification()
+{
+    return $this->hasMany(PendingNotification::class, 'schedule_id');
+}
+
     /**
      * Automatically check if the program is finished when a schedule is updated
      */
