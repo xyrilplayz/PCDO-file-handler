@@ -25,7 +25,7 @@ return new class extends Migration {
                 ->on('cooperatives')
                 ->onDelete('cascade');
 
-            $table->enum('type', ['due_today', 'due_soon', 'overdue']);
+            $table->enum('type', ['due_today', 'due_soon', 'overdue', 'due_in']);
             $table->string('subject')->nullable();
             $table->longText('body')->nullable();
             $table->boolean('processed')->default(0);

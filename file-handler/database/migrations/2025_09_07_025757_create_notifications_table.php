@@ -22,7 +22,7 @@ return new class extends Migration {
                   ->on('cooperatives')
                   ->onDelete('cascade');
 
-            $table->enum('type', ['due_today', 'due_soon', 'overdue']);
+            $table->enum('type', ['due_today', 'due_soon', 'overdue','due_in']);
 
             // email fields
             $table->string('subject')->nullable();
