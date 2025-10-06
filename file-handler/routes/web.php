@@ -92,6 +92,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/programs/{program}/documents/create', [CoopProgramProgressController::class, 'create'])->name('progress.index');
     Route::post('/programs/{program}/documents', [CoopProgramProgressController::class, 'store'])->name('progress.store');
     Route::get('/progress-reports/{report}/download', [CoopProgramProgressController::class, 'download'])->name('progress.download');
+    Route::get('/progress-reports/{report}/show', [CoopProgramProgressController::class, 'show'])
+        ->name('progress.show');
 
 
     //amount edits

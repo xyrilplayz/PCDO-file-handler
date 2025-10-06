@@ -67,7 +67,7 @@ class Cooperatives extends Controller
             'progressReports'
         ])->findOrFail($id);
 
-        return view('show-history', compact('cooperative'));
+        return view('progress', compact('cooperative'));
     }
 
     // // Handle post request
