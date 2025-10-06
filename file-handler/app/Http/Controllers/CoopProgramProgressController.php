@@ -29,67 +29,83 @@ class CoopProgramProgressController extends Controller
         return view('progress_reports', compact('program', 'coopPrograms'));
     }
 
-    public function store(Request $request, Programs $program)
-    {
-        $data = $request->validate([
-            'coop_program_id' => 'required|exists:coop_programs,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'file.*' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
-        ]);
 
-        $fileName = null;
-        $mimeType = null;
-        $fileContent = null;
 
-        if ($request->hasFile('file')) {
-            $files = $request->file('file');
-            $count = count($files);
+public function store(Request $request, Programs $program)
+{
+    $data = $request->validate([
+        'coop_program_id' => 'required|exists:coop_programs,id',
+        'title' => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'file.*' => 'nullable|image|mimes:jpeg,png,jpg|max:5120',
+    ]);
 
-            // ✅ Use Intervention v3 manager
-            $manager = new ImageManager(new Driver());
+    $fileName = null;
+    $mimeType = null;
+    $fileContent = null;
 
-            if ($count > 1) {
-                // Create a collage dynamically
-                $canvasSize = 800;
-                $canvas = $manager->create($canvasSize, $canvasSize);
+    if ($request->hasFile('file')) {
+        $files = is_array($request->file('file'))
+            ? $request->file('file')
+            : [$request->file('file')];
 
-                $grid = ceil(sqrt($count));
-                $cellSize = (int) ($canvasSize / $grid);
+        $count = count($files);
+        $manager = new ImageManager(new Driver());
 
-                foreach ($files as $index => $file) {
-                    $x = ($index % $grid) * $cellSize;
-                    $y = floor($index / $grid) * $cellSize;
+        // Fixed canvas size
+        $canvasWidth = 1800;
+        $canvasHeight = 1200;
 
-                    $img = $manager->read($file)->cover($cellSize, $cellSize);
-                    $canvas->place($img, 'top-left', $x, $y);
-                }
+        if ($count > 1) {
+            // Auto grid layout that fills the canvas exactly
+            $cols = ceil(sqrt($count));
+            $rows = ceil($count / $cols);
 
-                $fileName = 'Progress on ' . date('Y-m-d') . '.jpg';
-                $mimeType = 'image/jpeg';
-                $fileContent = base64_encode($canvas->toJpeg(90));
-            } else {
-                // ✅ Single image upload
-                $file = $files[0];
-                $img = $manager->read($file);
+            // Adjust rows/cols if grid has too much empty space
+            while (($cols - 1) * $rows >= $count) $cols--;
 
-                $fileName = $file->getClientOriginalName();
-                $mimeType = 'image/jpeg';
-                $fileContent = base64_encode($img->toJpeg(90));
+            // Each cell fills the portion of the canvas
+            $cellWidth = $canvasWidth / $cols;
+            $cellHeight = $canvasHeight / $rows;
+
+            // Create canvas
+            $canvas = $manager->create($canvasWidth, $canvasHeight);
+
+            // Place and scale each image
+            foreach ($files as $index => $file) {
+                $x = ($index % $cols) * $cellWidth;
+                $y = floor($index / $cols) * $cellHeight;
+
+                $img = $manager->read($file)->cover($cellWidth, $cellHeight);
+                $canvas->place($img, 'top-left', $x, $y);
             }
+
+            $fileName = 'Progress ' . date('Y-m-d') . '.jpg';
+            $mimeType = 'image/jpeg';
+            $fileContent = base64_encode($canvas->toJpeg(90));
+        } else {
+            // Single image fills entire canvas
+            $file = $files[0];
+            $img = $manager->read($file)->cover(1800, 1200);
+
+            $fileName = $file->getClientOriginalName();
+            $mimeType = 'image/jpeg';
+            $fileContent = base64_encode($img->toJpeg(90));
         }
-
-        CoopProgramProgress::create([
-            'coop_program_id' => $data['coop_program_id'],
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
-            'file_name' => $fileName,
-            'mime_type' => $mimeType,
-            'file_content' => $fileContent,
-        ]);
-
-        return redirect()->back()->with('success', 'Progress report with collage added successfully!');
     }
+
+    CoopProgramProgress::create([
+        'coop_program_id' => $data['coop_program_id'],
+        'title' => $data['title'],
+        'description' => $data['description'] ?? null,
+        'file_name' => $fileName,
+        'mime_type' => $mimeType,
+        'file_content' => $fileContent,
+    ]);
+
+    return redirect()->back()->with('success', 'Progress report with full-space collage added successfully!');
+}
+
 
 
     public function download(CoopProgramProgress $report)
