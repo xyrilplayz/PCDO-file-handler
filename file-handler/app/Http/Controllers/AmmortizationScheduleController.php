@@ -61,15 +61,18 @@ class AmmortizationScheduleController extends Controller
         }
 
         // 🔍 5. Compute installment
-        $amountPerMonth = round($coopProgram->loan_ammount / $monthsToPay, 2);
+        $amountPerMonth = intdiv($coopProgram->loan_ammount, $monthsToPay); 
+        $remainder = $coopProgram->loan_ammount % $monthsToPay; 
         $startDate = now()->addMonths($coopProgram->with_grace);
 
-
-        // 🔍 6. Create ammortization schedule
+        // 🔍 6. Create amortization schedule
         for ($i = 1; $i <= $monthsToPay; $i++) {
-            $amountDue = ($i === $monthsToPay)
-                ? $coopProgram->loan_ammount - ($amountPerMonth * ($monthsToPay - 1))
-                : $amountPerMonth;
+            $amountDue = $amountPerMonth;
+
+
+            if ($i === $monthsToPay) {
+                $amountDue += $remainder;
+            }
 
             AmmortizationSchedule::create([
                 'coop_program_id' => $coopProgram->id,
@@ -78,6 +81,7 @@ class AmmortizationScheduleController extends Controller
                 'status' => 'Unpaid', // ✅ ensure default
             ]);
         }
+
 
         return redirect()->route('loan.tracker.show', $coopProgram->id)
             ->with('success', 'Ammortization schedule generated successfully!');
