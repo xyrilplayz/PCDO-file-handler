@@ -13,6 +13,7 @@ class CoopProgram extends Model
     protected $fillable = [
         'coop_id',
         'program_id',
+        'project',
         'name',
         'description',
         'start_date',

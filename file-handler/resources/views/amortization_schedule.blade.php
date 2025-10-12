@@ -119,7 +119,7 @@
             <td class="label">Program Name:</td>
             <td>{{ $coopProgram->program->name ?? 'N/A' }}</td>
             <td class="label">Project:</td>
-            <td>{{ $coopProgram->program->project ?? 'N/A' }}</td>
+            <td>{{ $coopProgram->project ?? 'N/A' }}</td>
         </tr>
         <tr>
             <td class="label">Loan Amount:</td>
@@ -178,7 +178,7 @@
     {{-- Signature Section --}}
     <div class="signature-section">
         <div class="signature-row">
-            <div class="conforme">Conforme:</div>
+            <div class="conforme">Conforme:{{ $manager ?? 'N/A' }}</div>
             <br>
             <div class="Prepared">Prepared by:</div>
             <br>

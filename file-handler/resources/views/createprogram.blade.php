@@ -39,8 +39,8 @@
             {{-- -Coop number --}}
             <div class="form-group mt-3">
                 <label for="number">Contact Number:</label>
-                <input type="tel" name="number" id="number" class="form-control"
-                    placeholder="Enter Contact Number" required>
+                <input type="tel" name="number" id="number" class="form-control" placeholder="Enter Contact Number"
+                    required>
             </div>
 
             {{-- Program --}}
@@ -55,6 +55,11 @@
                         </option>
                     @endforeach
                 </select>
+            </div>
+
+            <div class="form-group mt-3">
+                <label for="project" class="form-label">Project Name</label>
+                <input type="text" class="form-control" id="project" name="project" required value="{{ old('name') }}">
             </div>
 
             <button type="submit" class="btn btn-primary mt-3">Enroll</button>

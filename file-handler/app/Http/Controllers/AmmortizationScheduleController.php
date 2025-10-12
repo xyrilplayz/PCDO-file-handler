@@ -208,24 +208,50 @@ class AmmortizationScheduleController extends Controller
         $coopProgram = CoopProgram::with([
             'cooperative.details',
             'program',
-            'ammortizationSchedules'
+            'ammortizationSchedules',
+            'cooperative.members'
         ])->findOrFail($coopProgramId);
 
         $coop = $coopProgram->cooperative;
-        $schedules = $coopProgram->ammortizationSchedules;
 
+        //chairman
+        $chairman = $coopProgram->cooperative->members
+            ->where('position', 'Chairman')
+            ->first();
+        $chairmanFullName = $chairman
+            ? trim("{$chairman->first_name} {$chairman->middle_name} {$chairman->last_name}")
+            : 'N/A';
+
+        //treasurer
+        $treasurer = $coopProgram->cooperative->members
+            ->where('position', 'Treasurer')
+            ->first();
+        $treasurerFullName = $treasurer
+            ? trim("{$treasurer->first_name} {$treasurer->middle_name} {$treasurer->last_name}")
+            : 'N/A';
+
+        //manager
+        $manager = $coopProgram->cooperative->members
+            ->where('position', 'Manager')
+            ->first();
+        $managerFullName = $manager
+            ? trim("{$manager->first_name} {$manager->middle_name} {$manager->last_name}")
+            : 'N/A';
+
+
+        $schedules = $coopProgram->ammortizationSchedules;
         // Load PDF view
         $pdf = PDF::loadView('amortization_schedule', [
             'coopProgram' => $coopProgram,
             'coop' => $coop,
             'schedules' => $schedules,
-            'chairman' => $coop->officers->chairman ?? 'N/A',
-            'treasurer' => $coop->officers->treasurer ?? 'N/A',
-            'manager' => $coop->officers->manager ?? 'N/A',
-            'contact' => $coop->detail->contact_number ?? 'N/A',
+            'chairman' => $chairmanFullName ?? 'N/A',
+            'treasurer' => $treasurerFullName ?? 'N/A',
+            'manager' => $managerFullName ?? 'N/A',
+            'contact' => $coopProgram->number ?? 'N/A',
         ])->setPaper([0, 0, 612, 1008], 'portrait'); // long bond paper 8.5x13
 
-        $filename = ($coop->name ?? 'Cooperative') . '_Amortization.pdf';
+        $filename = ($coop->name ?? 'Cooperative').'_'.(($coopProgram->start_date)->format('Y-m-d') ?? 'Cooperative').'_Amortization.pdf';
         return $pdf->download($filename);
     }
 

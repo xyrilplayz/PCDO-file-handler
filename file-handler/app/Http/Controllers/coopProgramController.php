@@ -46,10 +46,12 @@ class CoopProgramController extends Controller
             'coop_email' => 'required|email',
             'program_id' => 'required|exists:programs,id',
             'number' => 'required|numeric',
+            'project' => 'required|string|max:255'
         ]);
 
         $program = Programs::findOrFail($data['program_id']);
         $cooperative = Cooperative::findOrFail($data['coop_id']);
+        
 
         // Prevent duplicate ongoing programs
         $ongoingPrograms = CoopProgram::where('coop_id', $cooperative->id)
@@ -73,6 +75,7 @@ class CoopProgramController extends Controller
         $coopProgram = CoopProgram::create([
             'coop_id' => $cooperative->id,
             'program_id' => $program->id,
+            'project' => $data ['project'],
             'start_date' => now(),
             'end_date' => now()->addMonths($program->term_months),
             'program_status' => 'Ongoing',
