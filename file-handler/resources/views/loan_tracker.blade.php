@@ -12,20 +12,22 @@
         <p><strong>Term:</strong> {{ $loan->program->term_months - $coop->with_grace }} months</p>
         <br>
         {{-- -if statement here
-        if after 4 months then delinquent  --}}
+        if after 4 months then delinquent --}}
         <a class="btn btn-secondary" href="{{ route('amortization.download', $loan->id) }}">Download</a>
 
         <form action="{{ route('loan.incomplete', $loan->id) }}" method="POST" style="display:inline;">
             @csrf
-            <button type="submit" class="btn btn-secondary">Incomplete</button>
+            <button type="submit" class="btn btn-secondary">Nullified</button>
         </form>
+        @if (!$coop->program_status)
+            <form action="{{ route('resolved.store', $loan->id) }}" method="POST" enctype="multipart/form-data"
+                style="display:inline;">
+                @csrf
+                <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" required>
+                <button type="submit" class="btn btn-success">Resolved</button>
+            </form>
+        @endif
 
-        <form action="{{ route('resolved.store', $loan->id) }}" method="POST" enctype="multipart/form-data"
-            style="display:inline;">
-            @csrf
-            <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" required>
-            <button type="submit" class="btn btn-success">Resolved</button>
-        </form>
 
         <table class="table table-bordered mt-3">
             <thead>
@@ -111,25 +113,32 @@
 
                         {{-- Status --}}
                         <td>
-                            @if($schedule->status === 'Paid' || $schedule->is_paid)
+                            @if($schedule->status === 'Resolved')
+                                🟩 <strong>Resolved</strong>
+                                <br>
+                                {{ $schedule->date_paid ? \Carbon\Carbon::parse($schedule->date_paid)->toFormattedDateString() : 'N/A' }}
+                            @elseif($schedule->status === 'Paid' || $schedule->is_paid)
                                 ✅ Paid on
                                 {{ $schedule->date_paid ? \Carbon\Carbon::parse($schedule->date_paid)->toFormattedDateString() : 'N/A' }}
                             @elseif($schedule->status === 'Partial Paid')
                                 🟡 Partial Paid (₱{{ number_format($schedule->balance, 2) }} remaining)
-                            @elseif($isOverdue_today)
-                                ❗ Due Today ❗
-                            @elseif($isOverdue)
+                            @elseif(!$schedule->is_paid && $schedule->due_date->isPast())
                                 ❌ Overdue (₱{{ number_format($schedule->balance, 2) }} unpaid)
+                            @elseif(!$schedule->is_paid && $schedule->due_date->isToday())
+                                ❗ Due Today ❗
                             @else
                                 🔜 Next Due
                             @endif
                         </td>
+
                         {{-- Payment --}}
                         <td>
-                            @if ($schedule->status === 'Paid')
+                            @if ($schedule->status === 'Resolved')
+                                <span class="badge bg-success">Resolved</span>
+                                <br>All payments settled.
+                            @elseif ($schedule->status === 'Paid')
                                 <span class="badge bg-success">Paid</span>
                                 ₱{{ number_format($schedule->installment, 2) }}
-
                             @elseif ($schedule->status === 'Partial Paid')
                                 <span class="badge bg-warning text-dark">Partial Paid</span>
                                 ₱{{ number_format($schedule->installment, 2) }}
@@ -138,23 +147,22 @@
                                 <br>
                                 Carried Over:
                                 ₱{{ number_format(($schedule->installment + $schedule->penalty_amount) - $schedule->amount_paid, 2) }}
-
                             @else
-                                <form action="{{ route('schedules.markPaid', $schedule->id) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-primary">Mark Paid</button>
-                                </form>
-                                @if ($previous)
-                                    ₱{{ number_format($previous->balance + $schedule->installment ?? 0, 2) }}
+                                {{-- Only show payment buttons if not resolved --}}
+                                @if($loan->program_status !== 'Resolved')
+                                    <form action="{{ route('schedules.markPaid', $schedule->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-primary">Mark Paid</button>
+                                    </form>
+                                    <form action="{{ route('schedules.post', $schedule->id) }}" method="POST" class="mt-1">
+                                        @csrf
+                                        <input type="number" step="0.01" name="amount_paid" value="{{ $schedule->amount_paid }}"
+                                            class="form-control form-control-sm" placeholder="Amount paid">
+                                        <button type="submit" class="btn btn-sm btn-warning mt-1">Update Payment</button>
+                                    </form>
                                 @else
-                                    ₱{{ number_format($schedule->installment, 2) }}
+                                    <span class="text-muted">Payment disabled (Resolved)</span>
                                 @endif
-                                <form action="{{ route('schedules.post', $schedule->id) }}" method="POST" class="mt-1">
-                                    @csrf
-                                    <input type="number" step="0.01" name="amount_paid" value="{{ $schedule->amount_paid }}"
-                                        class="form-control form-control-sm" placeholder="Amount paid">
-                                    <button type="submit" class="btn btn-sm btn-warning mt-1">Update Payment</button>
-                                </form>
                             @endif
                         </td>
 

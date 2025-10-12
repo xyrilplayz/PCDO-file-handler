@@ -74,8 +74,18 @@ class Cooperative extends Model
     }
     public function oldPrograms()
     {
-        return $this->hasMany(Old::class, 'coop_program_id'); // if your table is literally named "old"
+        return $this->hasManyThrough(
+            Old::class,           // Final model
+            CoopProgram::class,   // Intermediate model
+            'coop_id',            // Foreign key on coop_programs table
+            'coop_program_id',    // Foreign key on olds table
+            'id',                 // Local key on cooperatives table
+            'id'                  // Local key on coop_programs table
+        )->whereHas('coopProgram', function ($q) {
+            $q->whereIn('program_status', ['Finished', 'Resolved']);
+        });
     }
+
 
     protected static function boot()
     {

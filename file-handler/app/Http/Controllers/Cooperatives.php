@@ -70,6 +70,7 @@ class Cooperatives extends Controller
         return view('progress', compact('cooperative'));
     }
 
+
     // // Handle post request
     // public function creatcoopPost(Request $request)
     // {

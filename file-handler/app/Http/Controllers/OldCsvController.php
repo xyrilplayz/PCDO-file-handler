@@ -40,13 +40,14 @@ class OldCsvController extends Controller
 
         $ongoing = $program->coopProgram->where('program_status', 'Ongoing');
         $finished = $program->coopProgram->where('program_status', 'Finished');
+        $resolved = $program->coopProgram->where('program_status', 'Resolved');
 
         // Attach CSVs to each coop program
         foreach ($program->coopProgram as $coopProgram) {
             $coopProgram->olds = Old::where('coop_program_id', $coopProgram->id)->get();
         }
 
-        return view('showing', compact('program', 'ongoing', 'finished'));
+        return view('showing', compact('program', 'ongoing', 'finished', 'resolved'));
     }
 
     /**

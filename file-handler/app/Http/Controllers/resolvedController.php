@@ -41,14 +41,14 @@ class ResolvedController extends Controller
         // Mark all amortization schedules as Paid
         AmmortizationSchedule::where('coop_program_id', $coopProgram->id)
             ->update([
-                'status' => 'Paid',
+                'status' => 'Resolved',
                 'date_paid' => now(),
                 'balance' => 0,
                 'penalty_amount' => 0,
             ]);
 
         // Mark program as Finished
-        $coopProgram->update(['program_status' => 'Finished']);
+        $coopProgram->update(['program_status' => 'Resolved']);
 
         return redirect()->back()->with('success', '✅ Program marked as resolved and all payments marked Paid.');
     }

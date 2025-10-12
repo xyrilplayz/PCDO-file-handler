@@ -53,9 +53,9 @@ class AmmortizationSchedule extends Model
     }
 
     public function pendingNotification()
-{
-    return $this->hasMany(PendingNotification::class, 'schedule_id');
-}
+    {
+        return $this->hasMany(PendingNotification::class, 'schedule_id');
+    }
 
     /**
      * Automatically check if the program is finished when a schedule is updated
@@ -76,17 +76,30 @@ class AmmortizationSchedule extends Model
     public function checkIfLastSchedulePaid()
     {
         $coopProgram = $this->coopProgram;
-        if (!$coopProgram)
+        if (!$coopProgram) {
             return;
+        }
 
-        $lastSchedule = $coopProgram->ammortizationSchedules()
-            ->orderByDesc('due_date')
-            ->first();
+        // Get all schedules for this program
+        $schedules = $coopProgram->ammortizationSchedules;
 
-        if ($lastSchedule && $lastSchedule->status === 'Paid' && $coopProgram->program_status !== 'Finished') {
+        // Check if all schedules are Resolved
+        $allResolved = $schedules->every(fn($s) => $s->status === 'Resolved');
+
+        if ($allResolved && $coopProgram->program_status !== 'Resolved') {
+            $coopProgram->program_status = 'Resolved';
+            $coopProgram->save();
+            return;
+        }
+
+        // Otherwise, check if all are Paid
+        $allPaid = $schedules->every(fn($s) => $s->status === 'Paid');
+
+        if ($allPaid && $coopProgram->program_status !== 'Finished') {
             $coopProgram->program_status = 'Finished';
             $coopProgram->save();
         }
     }
+
 
 }

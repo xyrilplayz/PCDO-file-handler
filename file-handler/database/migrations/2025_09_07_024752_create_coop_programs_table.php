@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->string('project')->nullable();
             $table->dateTime('start_date');
             $table->dateTime('end_date');
-            $table->enum('program_status', ['Finished', 'Ongoing', 'Incomplete']);
+            $table->enum('program_status', ['Finished', 'Ongoing', 'Resolved'])->nullable();
             $table->boolean('exported')->default(false);
             $table->boolean('archived')->default(false);
             $table->string('number')->nullable();

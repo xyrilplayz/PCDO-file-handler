@@ -37,7 +37,7 @@
     <h3>Old Programs (Finished)</h3>
     <ul>
         @php
-            $finishedPrograms = $cooperative->coopProgram->where('program_status', 'Finished');
+            $finishedPrograms = $cooperative->coopProgram->where('program_status', 'Finished' && 'Resolved');
         @endphp
         @forelse($finishedPrograms as $program)
             <li>

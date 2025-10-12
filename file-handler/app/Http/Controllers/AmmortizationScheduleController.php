@@ -251,14 +251,14 @@ class AmmortizationScheduleController extends Controller
             'contact' => $coopProgram->number ?? 'N/A',
         ])->setPaper([0, 0, 612, 1008], 'portrait'); // long bond paper 8.5x13
 
-        $filename = ($coop->name ?? 'Cooperative').'_'.(($coopProgram->start_date)->format('Y-m-d') ?? 'Cooperative').'_Amortization.pdf';
+        $filename = ($coop->name ?? 'Cooperative') . '_' . (($coopProgram->start_date)->format('Y-m-d') ?? 'Cooperative') . '_Amortization.pdf';
         return $pdf->download($filename);
     }
 
     public function markIncomplete($id)
     {
         $coopProgram = CoopProgram::findOrFail($id);
-        $coopProgram->program_status = 'Incomplete';
+        $coopProgram->program_status = null;
         $coopProgram->save();
 
         return redirect()->back()->with('success', 'Program marked as Incomplete.');
@@ -281,13 +281,12 @@ class AmmortizationScheduleController extends Controller
 
         // Mark all schedules as paid
         foreach ($loan->ammortizationSchedules as $schedule) {
-            $schedule->update([
-                'is_paid' => true,
-                'status' => 'Paid',
-                'date_paid' => now(),
-            ]);
+            $schedule->status = 'Resolved';
+            $schedule->date_paid = now();
+            $schedule->save();
         }
-
+        
+        
         return redirect()->back()->with('success', 'Loan marked as resolved and all schedules set to Paid.');
     }
 

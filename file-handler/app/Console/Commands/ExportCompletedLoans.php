@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use App\Models\Old;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+
 class ExportCompletedLoans extends Command
 {
     protected $signature = 'export:completed-loans';
@@ -27,11 +28,11 @@ class ExportCompletedLoans extends Command
                 'cooperative.details',
                 'cooperative.members'
             ])
-                ->where('program_status', 'Finished')
+                ->whereIn('program_status', ['Finished', 'Resolved'])
                 ->get();
 
             if ($coopPrograms->isEmpty()) {
-                $this->info('No finished cooperative programs found.');
+                $this->info('No finished/resolved cooperative programs found.');
                 return 0;
             }
 
@@ -41,18 +42,40 @@ class ExportCompletedLoans extends Command
                     continue;
 
                 // Ensure all payments are fully paid
-                $allPaid = $schedules->every(fn($s) => $s->status === 'Paid');
+                $allPaid = $schedules->every(fn($s) => in_array($s->status, ['Paid', 'Resolved']));
                 if (!$allPaid)
                     continue;
 
+
                 $coop = $coopProgram->cooperative;
+
+                //chairman
+                $chairman = $coopProgram->cooperative->members
+                    ->where('position', 'Chairman')
+                    ->first();
+                $chairmanFullName = $chairman
+                    ? trim("{$chairman->first_name} {$chairman->middle_name} {$chairman->last_name}")
+                    : 'N/A';
+
+                //treasurer
+                $treasurer = $coopProgram->cooperative->members
+                    ->where('position', 'Treasurer')
+                    ->first();
+                $treasurerFullName = $treasurer
+                    ? trim("{$treasurer->first_name} {$treasurer->middle_name} {$treasurer->last_name}")
+                    : 'N/A';
+
+                //manager
+                $manager = $coopProgram->cooperative->members
+                    ->where('position', 'Manager')
+                    ->first();
+                $managerFullName = $manager
+                    ? trim("{$manager->first_name} {$manager->middle_name} {$manager->last_name}")
+                    : 'N/A';
 
                 // Cooperative details
                 $address = $coop->detail->address ?? 'Unknown Address';
                 $contact = $coop->detail->contact_number ?? 'N/A';
-                $chairman = optional($coop->members->firstWhere('position', 'Chairman'))->last_name ?? 'N/A';
-                $treasurer = optional($coop->members->firstWhere('position', 'Treasurer'))->last_name ?? 'N/A';
-                $manager = optional($coop->members->firstWhere('position', 'Manager'))->last_name ?? 'N/A';
 
                 // ✅ Generate PDF directly from Blade view
                 $pdf = Pdf::loadView('amortization_schedule', [
@@ -61,9 +84,9 @@ class ExportCompletedLoans extends Command
                     'schedules' => $schedules,
                     'address' => $address,
                     'contact' => $contact,
-                    'chairman' => $chairman,
-                    'treasurer' => $treasurer,
-                    'manager' => $manager,
+                    'chairman' => $chairmanFullName,
+                    'treasurer' => $treasurerFullName,
+                    'manager' => $managerFullName,
                 ])
                     ->setPaper('a4', 'portrait')
                     ->setOptions([
@@ -88,7 +111,7 @@ class ExportCompletedLoans extends Command
                 $coopProgram->save();
 
                 // ✅ Optionally clear schedules
-                $coopProgram->ammortizationSchedules()->delete();
+                //$coopProgram->ammortizationSchedules()->delete();
 
                 $this->info("✅ Exported PDF for {$coop->name} saved in database (BLOB)");
             }

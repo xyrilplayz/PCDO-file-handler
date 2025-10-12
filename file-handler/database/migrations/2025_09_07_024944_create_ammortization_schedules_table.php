@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->integer('installment');
             $table->dateTime('date_paid')->nullable();
             $table->decimal('amount_paid', 15, 2)->nullable();
-            $table->enum('status', ['Unpaid','Partial Paid', 'Paid', 'Near Due', 'Overdue'])->default('Unpaid');
+            $table->enum('status', ['Unpaid','Partial Paid', 'Paid', 'Near Due', 'Overdue', 'Resolved'])->default('Unpaid');
             $table->decimal('penalty_amount', 15, 2)->nullable();
             $table->decimal('balance', 15, 2)->nullable();
             $table->string('notes')->nullable();
