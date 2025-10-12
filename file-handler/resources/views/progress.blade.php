@@ -48,14 +48,14 @@
                     <ul>
                         @foreach($program->olds as $old)
                             <li>
-                                {{ $old->file_name ?? 'CSV File' }}
+                                {{ $old->file_name ?? 'File' }}
                                 <a href="{{ route('old.download', $old->id) }}" class="btn btn-sm btn-success">Download</a>
                                 <a href="{{ route('old.view', $old->id) }}" class="btn btn-sm btn-primary">View</a>
                             </li>
                         @endforeach
                     </ul>
                 @else
-                    <p>No CSVs uploaded yet.</p>
+                    <p>No file uploaded yet.</p>
                 @endif
             </li>
         @empty

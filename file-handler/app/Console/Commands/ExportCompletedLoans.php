@@ -8,6 +8,7 @@ use App\Models\CoopProgram;
 use League\Csv\Writer;
 use Carbon\Carbon;
 use App\Models\Old;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ExportCompletedLoans extends Command
 {
@@ -17,16 +18,17 @@ class ExportCompletedLoans extends Command
     public function handle()
     {
         try {
-            $this->info('Running export...');
+            $this->info('🏁 Running export of completed cooperative loans...');
 
+            // Load finished cooperative programs
             $coopPrograms = CoopProgram::with([
                 'ammortizationSchedules',
                 'program',
-                'cooperative.detail', // singular
+                'cooperative.details',
                 'cooperative.members'
             ])
-            ->where('program_status', 'Finished')
-            ->get();
+                ->where('program_status', 'Finished')
+                ->get();
 
             if ($coopPrograms->isEmpty()) {
                 $this->info('No finished cooperative programs found.');
@@ -35,75 +37,72 @@ class ExportCompletedLoans extends Command
 
             foreach ($coopPrograms as $coopProgram) {
                 $schedules = $coopProgram->ammortizationSchedules->sortBy('due_date');
-                if ($schedules->isEmpty()) continue;
+                if ($schedules->isEmpty())
+                    continue;
 
+                // Ensure all payments are fully paid
                 $allPaid = $schedules->every(fn($s) => $s->status === 'Paid');
-                if (!$allPaid) continue;
+                if (!$allPaid)
+                    continue;
 
                 $coop = $coopProgram->cooperative;
 
                 // Cooperative details
                 $address = $coop->detail->address ?? 'Unknown Address';
                 $contact = $coop->detail->contact_number ?? 'N/A';
-
-                // Members
                 $chairman = optional($coop->members->firstWhere('position', 'Chairman'))->last_name ?? 'N/A';
                 $treasurer = optional($coop->members->firstWhere('position', 'Treasurer'))->last_name ?? 'N/A';
                 $manager = optional($coop->members->firstWhere('position', 'Manager'))->last_name ?? 'N/A';
 
-                // Loan summary CSV
-                $csvData = [];
-                $csvData[] = ['Cooperative_name', $coop->name ?? 'Unknown Cooperative', 'Address', $address];
-                $csvData[] = ['Program_name', $coopProgram->program->name, 'Coop Chairman', $chairman];
-                $csvData[] = ['Loan_amount', $coopProgram->loan_ammount, 'Coop Treasurer', $treasurer];
-                $csvData[] = ['Start_date', Carbon::parse($coopProgram->start_date)->format('Y-m-d'), 'Coop Manager', $manager];
-                $csvData[] = ['Grace_period', $coopProgram->with_grace, 'Contact Number', $contact];
-                $csvData[] = ['Term_months', $coopProgram->program->term_months, 'Project', $coopProgram->program->project ?? 'N/A'];
-                $csvData[] = []; // blank row
+                // ✅ Generate PDF directly from Blade view
+                $pdf = Pdf::loadView('amortization_schedule', [
+                    'coop' => $coop,
+                    'coopProgram' => $coopProgram,
+                    'schedules' => $schedules,
+                    'address' => $address,
+                    'contact' => $contact,
+                    'chairman' => $chairman,
+                    'treasurer' => $treasurer,
+                    'manager' => $manager,
+                ])
+                    ->setPaper('a4', 'portrait')
+                    ->setOptions([
+                        'dpi' => 80, // lower DPI = more fits on one page
+                        'defaultFont' => 'sans-serif',
+                        'isHtml5ParserEnabled' => true,
+                        'isRemoteEnabled' => true,
+                    ]);
 
-                // Schedule header
-                $csvData[] = ['due_date', 'installment', 'date_paid', 'amount_paid', 'status'];
-                foreach ($schedules as $schedule) {
-                    $csvData[] = [
-                        Carbon::parse($schedule->due_date)->format('Y-m-d'),
-                        $schedule->installment,
-                        $schedule->date_paid ? Carbon::parse($schedule->date_paid)->format('Y-m-d') : '',
-                        $schedule->amount_paid ?? '',
-                        $schedule->status
-                    ];
-                }
-                $csvData[] = []; // optional blank row
 
-                // Create CSV in memory
-                $csv = Writer::createFromString('');
-                foreach ($csvData as $row) {
-                    $csv->insertOne($row);
-                }
-                $csvContent = $csv->getContent();
+                // ✅ Get the binary content (for BLOB)
+                $pdfBinary = $pdf->output();
 
-                // Save to Old table
+                // ✅ Save binary PDF directly into the `Old` table
                 Old::create([
                     'coop_program_id' => $coopProgram->id,
-                    'file_content' => $csvContent,
+                    'file_content' => $pdfBinary, // this is the BLOB column
                 ]);
 
-                // Mark exported
+                // ✅ Mark program as exported
                 $coopProgram->exported = true;
                 $coopProgram->save();
 
-                // Delete schedules
+                // ✅ Optionally clear schedules
                 $coopProgram->ammortizationSchedules()->delete();
+
+                $this->info("✅ Exported PDF for {$coop->name} saved in database (BLOB)");
             }
 
-            $this->info('✅ CSV exported and saved to the Old table successfully!');
+            $this->info('🎉 All fully paid cooperative loans have been exported successfully!');
             return 0;
 
         } catch (\Exception $e) {
-            \Log::error('ExportCompletedLoans failed: '.$e->getMessage(), [
+            \Log::error('ExportCompletedLoans failed: ' . $e->getMessage(), [
                 'stack' => $e->getTraceAsString()
             ]);
-            $this->error('ExportCompletedLoans failed: '.$e->getMessage());
+            $this->error('❌ ExportCompletedLoans failed: ' . $e->getMessage());
             return 1;
         }
     }
+
 }

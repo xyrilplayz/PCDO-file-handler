@@ -8,6 +8,8 @@ use App\Models\Cooperative;
 use App\Models\CoopProgram;
 use App\Models\Programs;
 use Illuminate\Support\Facades\Response;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Vtiful\Kernel\Format;
 
 class OldCsvController extends Controller
 {
@@ -63,19 +65,33 @@ class OldCsvController extends Controller
     /**
      * Download the CSV file
      */
-    public function download($id)
+
+    public function downloadPdf($id)
     {
-        $record = Old::with('cooperative')->findOrFail($id);
+        // Fetch the record (with PDF BLOB)
+        $record = Old::with(['cooperative'])->findOrFail($id);
 
-        $coopName = $record->cooperative->name ?? 'coop';
+        // Binary PDF content (already stored as blob)
+        $pdfBinary = $record->file_content;
 
-        // Fetch the coop program correctly
-        $program = CoopProgram::find($record->coop_program_id);
-        $programName = $program->name ?? 'program';
+        if (empty($pdfBinary)) {
+            abort(404, 'No PDF data found for this record.');
+        }
 
-        return Response::make($record->file_content, 200, [
-            'Content-Type' => 'text/csv',
-            'Content-Disposition' => "attachment; filename=\"{$coopName}_{$programName}_{$id}.csv\"",
+        // Cooperative and program details (for filename)
+        $coop = $record->cooperative;
+        $coopProgram = CoopProgram::find($record->coop_program_id);
+
+        $coopName = $coop->name ?? 'coop';
+        $programName = $coopProgram->program->name ?? 'program';
+        $startdate = $coopProgram->start_date->format('Y-m-d');
+        $fileName = "{$coopName}_{$programName}_{$startdate}.pdf";
+
+        // Return PDF as download
+        return response($pdfBinary, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => "attachment; filename=\"{$fileName}\"",
         ]);
     }
+
 }

@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->foreignId('program_id')->constrained('programs')->onDelete('cascade');
             $table->dateTime('start_date');
             $table->dateTime('end_date');
-            $table->enum('program_status', ['Finished', 'Ongoing']);
+            $table->enum('program_status', ['Finished', 'Ongoing', 'Incomplete']);
             $table->boolean('exported')->default(false);
             $table->boolean('archived')->default(false);
             $table->string('number')->nullable();

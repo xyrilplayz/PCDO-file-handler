@@ -22,6 +22,9 @@
               <li>
                 <a class="nav-link" href="{{ route('notifications.index') }}">Notification</a>
               </li>
+              <li>
+                <p>Documentation</p>
+              </li>
             @else
               <li class="nav-item">
                 <a class="nav-link" href="{{ route('login') }}">Login</a>

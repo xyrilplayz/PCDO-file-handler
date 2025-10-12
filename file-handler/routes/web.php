@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Notification;
 use App\Notifications\LoanOverdueNotification;
 use App\Http\Controllers\OldCsvController;
 use App\Http\Controllers\CoopProgramProgressController;
+use App\Http\Controllers\ResolvedController;
 
 
 
@@ -77,11 +78,17 @@ Route::group(['middleware' => 'auth'], function () {
         [AmmortizationScheduleController::class, 'sendOverdueEmail']
     )->name('schedules.sendOverdueEmail');
 
+    Route::get('/amortization/{loan}/download', [AmmortizationScheduleController::class, 'downloadPdf'])->name('amortization.download');
+    Route::post('/amortization/{loan}/incomplete', [AmmortizationScheduleController::class, 'markIncomplete'])->name('loan.incomplete');
+    
+
+
+
 
     Route::get('/old', [OldCSVController::class, 'index'])->name('old.index');
     Route::get('/old/{coopProgram}', [OldCSVController::class, 'show'])->name('old.show');
     Route::get('/old/file/{id}/view', [OldCSVController::class, 'view'])->name('old.view');
-    Route::get('/old/file/{id}/download', [OldCSVController::class, 'download'])->name('old.download');
+    Route::get('/old/file/{id}/download', [OldCSVController::class, 'downloadPdf'])->name('old.download');
 
     //notifications
     // routes/web.php
@@ -103,5 +110,10 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/loans/schedules/{schedule}/penalty', [AmmortizationScheduleController::class, 'penalty'])
         ->name('schedules.penalty');
 
+
+    //resolved
+    Route::get('/resolved/{coopProgram}/upload', [ResolvedController::class, 'create'])->name('resolved.create');
+    Route::post('/resolved/{coopProgram}', [ResolvedController::class, 'store'])->name('resolved.store');
+    Route::get('/resolved/download/{id}', [ResolvedController::class, 'download'])->name('resolved.download');
 
 });

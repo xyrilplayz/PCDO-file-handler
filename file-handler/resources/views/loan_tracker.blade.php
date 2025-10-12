@@ -10,6 +10,22 @@
         <p><strong>Start Date:</strong> {{ \Carbon\Carbon::parse($loan->start_date)->toFormattedDateString() }}</p>
         <p><strong>Grace Period:</strong> {{ $coop->with_grace }} months</p>
         <p><strong>Term:</strong> {{ $loan->program->term_months - $coop->with_grace }} months</p>
+        <br>
+        {{-- -if statement here
+        if after 4 months then delinquent  --}}
+        <a class="btn btn-secondary" href="{{ route('amortization.download', $loan->id) }}">Download</a>
+
+        <form action="{{ route('loan.incomplete', $loan->id) }}" method="POST" style="display:inline;">
+            @csrf
+            <button type="submit" class="btn btn-secondary">Incomplete</button>
+        </form>
+
+        <form action="{{ route('resolved.store', $loan->id) }}" method="POST" enctype="multipart/form-data"
+            style="display:inline;">
+            @csrf
+            <input type="file" name="file" accept=".pdf,.jpg,.jpeg,.png" required>
+            <button type="submit" class="btn btn-success">Resolved</button>
+        </form>
 
         <table class="table table-bordered mt-3">
             <thead>

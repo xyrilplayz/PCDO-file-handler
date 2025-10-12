@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PendingNotification;
+use App\Models\resolved;
 use Illuminate\Http\Request;
 use App\Models\Programs;
 use App\Models\ProgramChecklists;
@@ -14,6 +15,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Notification;
 use App\Notifications\LoanOverdueNotification;
 use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class AmmortizationScheduleController extends Controller
 {
@@ -61,8 +63,8 @@ class AmmortizationScheduleController extends Controller
         }
 
         // 🔍 5. Compute installment
-        $amountPerMonth = intdiv($coopProgram->loan_ammount, $monthsToPay); 
-        $remainder = $coopProgram->loan_ammount % $monthsToPay; 
+        $amountPerMonth = intdiv($coopProgram->loan_ammount, $monthsToPay);
+        $remainder = $coopProgram->loan_ammount % $monthsToPay;
         $startDate = now()->addMonths($coopProgram->with_grace);
 
         // 🔍 6. Create amortization schedule
@@ -199,6 +201,71 @@ class AmmortizationScheduleController extends Controller
 
         return back()->with('success', 'Payment noted successfully.');
     }
+
+    public function downloadPdf($coopProgramId)
+    {
+        // Load CoopProgram with relations
+        $coopProgram = CoopProgram::with([
+            'cooperative.details',
+            'program',
+            'ammortizationSchedules'
+        ])->findOrFail($coopProgramId);
+
+        $coop = $coopProgram->cooperative;
+        $schedules = $coopProgram->ammortizationSchedules;
+
+        // Load PDF view
+        $pdf = PDF::loadView('amortization_schedule', [
+            'coopProgram' => $coopProgram,
+            'coop' => $coop,
+            'schedules' => $schedules,
+            'chairman' => $coop->officers->chairman ?? 'N/A',
+            'treasurer' => $coop->officers->treasurer ?? 'N/A',
+            'manager' => $coop->officers->manager ?? 'N/A',
+            'contact' => $coop->detail->contact_number ?? 'N/A',
+        ])->setPaper([0, 0, 612, 1008], 'portrait'); // long bond paper 8.5x13
+
+        $filename = ($coop->name ?? 'Cooperative') . '_Amortization.pdf';
+        return $pdf->download($filename);
+    }
+
+    public function markIncomplete($id)
+    {
+        $coopProgram = CoopProgram::findOrFail($id);
+        $coopProgram->program_status = 'Incomplete';
+        $coopProgram->save();
+
+        return redirect()->back()->with('success', 'Program marked as Incomplete.');
+    }
+
+    public function markResolved(Request $request, $loanId)
+    {
+        $loan = CoopProgram::with('ammortizationSchedules')->findOrFail($loanId);
+
+        $path = null;
+        if ($request->hasFile('receipt')) {
+            $path = $request->file('receipt')->store('receipts', 'public');
+        }
+
+        // Save record in resolved table
+        Resolved::create([
+            'loan_id' => $loan->id,
+            'receipt_path' => $path,
+        ]);
+
+        // Mark all schedules as paid
+        foreach ($loan->ammortizationSchedules as $schedule) {
+            $schedule->update([
+                'is_paid' => true,
+                'status' => 'Paid',
+                'date_paid' => now(),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Loan marked as resolved and all schedules set to Paid.');
+    }
+
+
 
 
 }
