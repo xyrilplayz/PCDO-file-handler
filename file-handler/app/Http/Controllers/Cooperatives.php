@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Program;
 use App\Models\CoopProgram;
 use App\Models\Cooperative;
+use App\Models\CoopDetail;
 use Illuminate\Support\Facades\Auth;
 
 
@@ -28,13 +29,15 @@ class Cooperatives extends Controller
     }
 
     // Handle cooperative creation
-    public function creatcoopPost(Request $request)
+    public function store(Request $request)
     {
         $request->validate([
             'id' => 'required',
             'name' => 'required|string|max:255',
             'holder' => 'nullable|exists:cooperatives,id',
             'type' => 'required|in:primary,secondary,tertiary',
+            'contact_number' => 'required|string|max:20',
+            'email' => 'required|email|max:255',
         ]);
 
         $existing = Cooperative::where('id', $request->id)
@@ -47,18 +50,35 @@ class Cooperatives extends Controller
             ]);
         }
 
-        // Generate unique ID in ###-### format
-
-        Cooperative::create([
+        // Create the cooperative
+        $cooperative = Cooperative::create([
             'id' => $request->id,
             'name' => $request->name,
             'holder' => $request->holder,
             'type' => $request->type,
         ]);
 
+        // Save additional details
+        CoopDetail::create([
+            'coop_id' => $cooperative->id,
+            'number' => $request->contact_number,
+            'email' => $request->email,
+        ]);
+
         return redirect()->route('cooperatives.create')
             ->with('success', 'Cooperative created successfully.');
     }
+    public function getDetails($id)
+    {
+        $coop = Cooperative::with('coopDetail')->findOrFail($id);
+        return response()->json([
+            'number' => optional($coop->coopDetail)->number,
+            'email' => optional($coop->coopDetail)->email,
+        ]);
+    }
+
+
+
     public function show($id)
     {
         $cooperative = Cooperative::with([

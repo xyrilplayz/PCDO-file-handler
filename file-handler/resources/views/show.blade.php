@@ -62,6 +62,14 @@
                     <th>Net Surplus</th>
                     <td>{{ $coop->details->net_surplus }}</td>
                 </tr>
+                <tr>
+                     <th>Number</th>
+                    <td>{{ $coop->details->number }}</td>
+                </tr>
+                <tr>
+                     <th>Email</th>
+                    <td>{{ $coop->details->email }}</td>
+                </tr>
             @else
                 <tr>
                     <td colspan="2" class="text-center text-muted">

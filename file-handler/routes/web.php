@@ -42,7 +42,7 @@ Route::get('/logout', [xy::class, 'logout'])->name('logout');
 Route::group(['middleware' => 'auth'], function () {
     // Cooperatives routes create
     Route::get('/createcooperative', [Cooperatives::class, 'coop'])->name('cooperatives.create');
-    Route::post('/createcooperative', [Cooperatives::class, 'creatcoopPost'])->name('cooperatives.post');
+    Route::post('/createcooperative', [Cooperatives::class, 'store'])->name('cooperatives.post');
 
     //cooperative details
     Route::get('/cooperatives/{id}', [Cooperative::class, 'index'])
@@ -50,6 +50,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/cooperatives/{id}/details', [CoopDetailsController::class, 'index'])
         ->name('cooperatives.details');
     Route::get('/cooperatives/{id}', [Cooperatives::class, 'show'])->name('cooperative.show');
+    Route::get('/cooperative/details/{id}', [Cooperatives::class, 'getDetails']);
     Route::post('/programs/{id}/archive', [CoopProgramController::class, 'archiveFinishedProgram'])
         ->name('programs.archive');
 

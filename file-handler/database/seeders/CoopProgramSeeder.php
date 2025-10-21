@@ -25,8 +25,6 @@ class CoopProgramSeeder extends Seeder
                 'start_date' => now(),
                 'end_date' => now()->addMonths($program->term_months),
                 'program_status' => 'Ongoing',
-                'number' => null,
-                'email' => $coop->name . '@example.com',
                 'loan_ammount' => rand($program->min_amount, $program->max_amount),
             ]);
             

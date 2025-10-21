@@ -29,20 +29,6 @@
                 </select>
             </div>
 
-            {{-- Coop Email --}}
-            <div class="form-group mt-3">
-                <label for="coop_email">Cooperative Email:</label>
-                <input type="email" name="coop_email" id="coop_email" class="form-control"
-                    placeholder="Enter Cooperative Email" required>
-            </div>
-
-            {{-- -Coop number --}}
-            <div class="form-group mt-3">
-                <label for="number">Contact Number:</label>
-                <input type="tel" name="number" id="number" class="form-control" placeholder="Enter Contact Number"
-                    required>
-            </div>
-
             {{-- Program --}}
             <div class="form-group mt-3">
                 <label for="program_id">Select Program:</label>

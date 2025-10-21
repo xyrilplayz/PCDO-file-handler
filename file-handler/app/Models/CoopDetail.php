@@ -19,6 +19,8 @@ class CoopDetail extends Model
         'members_count',
         'total_asset',
         'net_surplus',
+        'number',
+        'email',
     ];
 
     public function cooperative()

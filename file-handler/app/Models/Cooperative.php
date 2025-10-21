@@ -49,6 +49,11 @@ class Cooperative extends Model
     {
         return $this->hasMany(CoopProgram::class, 'coop_id', 'id');
     }
+    public function coopDetail()
+    {
+        return $this->hasOne(CoopDetail::class, 'coop_id', 'id');
+    }
+
 
     public function isValidHierarchy()
     {
