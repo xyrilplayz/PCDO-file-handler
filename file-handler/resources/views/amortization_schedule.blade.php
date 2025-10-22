@@ -185,6 +185,41 @@
             <div class="Noted">Noted by:</div>
         </div>
     </div>
+
+    {{-- PAGE BREAK for Remarks --}}
+    <div style="page-break-before: always;"></div>
+
+    <h2>Remarks for Removed Penalties</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Due Date</th>
+                <th>Date Paid</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+            @php
+                $remarks = $schedules->filter(fn($s) => !empty($s->notes));
+            @endphp
+
+            @forelse ($remarks as $i => $s)
+                <tr>
+                    <td>{{ $i + 1 }}</td>
+                    <td>{{ \Carbon\Carbon::parse($s->due_date)->format('Y-m-d') }}</td>
+                    <td>{{ $s->date_paid ? \Carbon\Carbon::parse($s->date_paid)->format('Y-m-d') : '—' }}</td>
+                    <td>{{ $s->notes }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="4" style="text-align:center;">No remarks found.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
 </body>
 
 </html>

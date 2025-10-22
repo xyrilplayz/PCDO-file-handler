@@ -22,6 +22,7 @@ return new class extends Migration {
             $table->enum('program_status', ['Finished', 'Ongoing', 'Resolved'])->nullable();
             $table->boolean('exported')->default(false);
             $table->boolean('archived')->default(false);
+            $table->string('consenter')->nullable();
                     // NOT nullable
             $table->integer('loan_ammount')->nullable();
             $table->integer('with_grace')->nullable();

@@ -53,7 +53,7 @@
             $uploaded = $checklistItems->filter(fn($i) => $i->uploads->isNotEmpty())->count();
         @endphp
 
-        @if($total > 0 && $total > $uploaded)
+        @if($total)
             <div class="card my-4 p-3 border-success">
                 <h4>Finalize Loan Details</h4>
                 <form action="{{ route('program.finalizeLoan', $cooperative->id) }}" method="POST">
@@ -78,33 +78,43 @@
                         </select>
                     </div>
 
+                    {{-- ✅ Consent Checkbox --}}
+                    <div class="form-check mt-4">
+                        <input type="checkbox" class="form-check-input" id="consent" name="consent" value="1" required>
+                        <label class="form-check-label" for="consent">
+                            I certify that all of my uploaded files are correct.
+                        </label>
+                    </div>
+
                     <button type="submit" class="btn btn-primary mt-3">Finalize Loan</button>
                 </form>
-                {{-- JS for min/max buttons --}}
-                <script>
-                    document.addEventListener("DOMContentLoaded", function () {
-                        const loanInput = document.getElementById("loan_amount");
-                        const loanRange = document.getElementById("loan_range");
-                        const btnMin = document.getElementById("use_min");
-                        const btnMax = document.getElementById("use_max");
+            </div>
 
-                        let min = {{ $cooperative->program->min_amount }};
-                        let max = {{ $cooperative->program->max_amount }};
+            {{-- JS for min/max buttons --}}
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    const loanInput = document.getElementById("loan_amount");
+                    const loanRange = document.getElementById("loan_range");
+                    const btnMin = document.getElementById("use_min");
+                    const btnMax = document.getElementById("use_max");
 
-                        loanRange.innerText = `Allowed range: ₱${min} - ₱${max}`;
-                        loanInput.min = min;
-                        loanInput.max = max;
+                    let min = {{ $cooperative->program->min_amount }};
+                    let max = {{ $cooperative->program->max_amount }};
 
-                        btnMin.addEventListener("click", () => loanInput.value = min);
-                        btnMax.addEventListener("click", () => loanInput.value = max);
-                    });
-                </script>
+                    loanRange.innerText = `Allowed range: ₱${min.toLocaleString()} - ₱${max.toLocaleString()}`;
+                    loanInput.min = min;
+                    loanInput.max = max;
+
+                    btnMin.addEventListener("click", () => loanInput.value = min);
+                    btnMax.addEventListener("click", () => loanInput.value = max);
+                });
+            </script>
         @endif
-        </div>
-        @if($cooperative->loan_ammount && in_array($cooperative->with_grace, [0, 4]))
-            <form action="{{ route('generate.create', $cooperative->id) }}" method="POST">
-                @csrf
-                <button type="submit" class="btn btn-primary btn-sm">Generate Amortization Schedule</button>
-            </form>
-        @endif
+    </div>
+    @if($cooperative->loan_ammount && in_array($cooperative->with_grace, [0, 4]))
+        <form action="{{ route('generate.create', $cooperative->id) }}" method="POST">
+            @csrf
+            <button type="submit" class="btn btn-primary btn-sm">Generate Amortization Schedule</button>
+        </form>
+    @endif
 @endsection

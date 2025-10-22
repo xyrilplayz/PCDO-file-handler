@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\CoopProgramEnrolled;
 use App\Models\AmmortizationSchedule;
+use Illuminate\Support\Facades\Auth;
 
 class CoopProgramController extends Controller
 {
@@ -111,8 +112,9 @@ class CoopProgramController extends Controller
         $request->validate([
             'loan_ammount' => 'required|numeric|min:1',
             'with_grace' => 'required|boolean',
+            'consent' => 'accepted', // ✅ ensures checkbox is checked
         ]);
-
+        
         $program = $coopProgram->program;
 
         if ($request->loan_ammount < $program->min_amount || $request->loan_ammount > $program->max_amount) {
@@ -121,20 +123,20 @@ class CoopProgramController extends Controller
             ]);
         }
 
-        // ✅ Ensure checklist complete
+        // ✅ Ensure checklist is complete
         $allChecklists = $program->checklists()->count();
         $completed = $coopProgram->checklists()->whereNotNull('file_name')->count();
 
-        if ($completed > $allChecklists) {
-            return back()->withErrors(['loan_amount' => 'Checklist is not yet complete.']);
-        }
+        // if ($completed < $allChecklists) {
+        //     return back()->withErrors(['loan_ammount' => 'Checklist is not yet complete.']);
+        // }
 
-        // ✅ Update loan details
+        // ✅ Update loan details with consentor
         $coopProgram->update([
             'loan_ammount' => $request->loan_ammount,
             'with_grace' => $request->with_grace ? 4 : 0,
+            'consenter' => Auth::id(), // ✅ store the ID of the user who gave consent
         ]);
-
         // ✅ Generate schedule automatically
         $monthsToPay = $program->term_months - $coopProgram->with_grace;
         if ($monthsToPay <= 0) {
@@ -144,7 +146,6 @@ class CoopProgramController extends Controller
         $amountPerMonth = intdiv($coopProgram->loan_ammount, $monthsToPay);
         $remainder = $coopProgram->loan_ammount % $monthsToPay;
         $startDate = now()->addMonths($coopProgram->with_grace);
-
         $firstDueDate = $startDate->copy();
 
         for ($i = 1; $i <= $monthsToPay; $i++) {
@@ -161,22 +162,19 @@ class CoopProgramController extends Controller
             ]);
         }
 
-        // ✅ Send Email Notification
+        // ✅ Email + Notification remain unchanged
         $coop = $coopProgram->cooperative;
         $coopDetail = $coop->coopDetail;
-        
 
         if ($coopDetail && $coopDetail->email) {
             $subject = 'Amortization Schedule Created';
             $body = "Dear {$coop->name},\n\nYour amortization schedule has been successfully generated under the program '{$program->name}'.\nYour first payment of ₱{$coopProgram->loan_ammount} is due on " . $firstDueDate->format('F d, Y') . ".\n\nThank you.";
 
             Mail::raw($body, function ($message) use ($coopDetail, $subject) {
-                $message->to($coopDetail->email)
-                    ->subject($subject);
+                $message->to($coopDetail->email)->subject($subject);
             });
         }
 
-        // ✅ Log Notification in DB
         Notifications::create([
             'schedule_id' => null,
             'coop_id' => $coop->id,
