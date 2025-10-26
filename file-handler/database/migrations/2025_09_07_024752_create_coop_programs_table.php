@@ -17,8 +17,8 @@ return new class extends Migration {
             $table->foreign('coop_id')->references('id')->on('cooperatives')->onDelete('cascade');
             $table->foreignId('program_id')->constrained('programs')->onDelete('cascade');
             $table->string('project')->nullable();
-            $table->dateTime('start_date');
-            $table->dateTime('end_date');
+            $table->dateTime('start_date')->nullable();
+            $table->dateTime('end_date')->nullable();
             $table->enum('program_status', ['Finished', 'Ongoing', 'Resolved'])->nullable();
             $table->boolean('exported')->default(false);
             $table->boolean('archived')->default(false);

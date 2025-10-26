@@ -79,7 +79,6 @@ class CoopProgramController extends Controller
             'program_id' => $program->id,
             'project' => $data['project'],
             'start_date' => now(),
-            'end_date' => now()->addMonths($program->term_months),
             'program_status' => 'Ongoing',
             'loan_amount' => null,
             'with_grace' => null,
@@ -114,16 +113,17 @@ class CoopProgramController extends Controller
             'with_grace' => 'required|boolean',
             'consent' => 'accepted', // ✅ ensures checkbox is checked
         ]);
-        
+
         $program = $coopProgram->program;
 
+        // ✅ Validate loan amount range
         if ($request->loan_ammount < $program->min_amount || $request->loan_ammount > $program->max_amount) {
             return back()->withErrors([
                 'loan_ammount' => "Loan amount must be between ₱{$program->min_amount} and ₱{$program->max_amount}"
             ]);
         }
 
-        // ✅ Ensure checklist is complete
+        // ✅ Optional: Ensure checklist is complete
         $allChecklists = $program->checklists()->count();
         $completed = $coopProgram->checklists()->whereNotNull('file_name')->count();
 
@@ -131,13 +131,24 @@ class CoopProgramController extends Controller
         //     return back()->withErrors(['loan_ammount' => 'Checklist is not yet complete.']);
         // }
 
-        // ✅ Update loan details with consentor
+        // ✅ Prevent duplicate schedule generation
+        if ($coopProgram->ammortizationSchedules()->exists()) {
+            return back()->withErrors(['loan_ammount' => 'Amortization schedule already exists for this program.']);
+        }
+
+        // ✅ Update coop program with finalized loan info
         $coopProgram->update([
             'loan_ammount' => $request->loan_ammount,
             'with_grace' => $request->with_grace ? 4 : 0,
-            'consenter' => Auth::id(), // ✅ store the ID of the user who gave consent
+            'consenter' => Auth::id(),
         ]);
-        // ✅ Generate schedule automatically
+
+        // ✅ Use stored start_date as the base reference
+        $baseDate = $coopProgram->start_date ?? now();
+        $startDate = \Carbon\Carbon::parse($baseDate)->addMonths($coopProgram->with_grace);
+        $firstDueDate = $startDate->copy();
+
+        // ✅ Calculate payment schedule details
         $monthsToPay = $program->term_months - $coopProgram->with_grace;
         if ($monthsToPay <= 0) {
             throw new \Exception('Invalid term and grace period.');
@@ -145,9 +156,8 @@ class CoopProgramController extends Controller
 
         $amountPerMonth = intdiv($coopProgram->loan_ammount, $monthsToPay);
         $remainder = $coopProgram->loan_ammount % $monthsToPay;
-        $startDate = now()->addMonths($coopProgram->with_grace);
-        $firstDueDate = $startDate->copy();
 
+        // ✅ Generate amortization schedule
         for ($i = 1; $i <= $monthsToPay; $i++) {
             $amountDue = $amountPerMonth;
             if ($i === $monthsToPay) {
@@ -162,31 +172,41 @@ class CoopProgramController extends Controller
             ]);
         }
 
-        // ✅ Email + Notification remain unchanged
+        // ✅ Compute and update end date (last due date)
+        $endDate = $startDate->copy()->addMonths($monthsToPay - 1);
+        $coopProgram->update(['end_date' => $endDate]);
+
+        // ✅ Send email notification to cooperative
         $coop = $coopProgram->cooperative;
         $coopDetail = $coop->coopDetail;
 
         if ($coopDetail && $coopDetail->email) {
             $subject = 'Amortization Schedule Created';
-            $body = "Dear {$coop->name},\n\nYour amortization schedule has been successfully generated under the program '{$program->name}'.\nYour first payment of ₱{$coopProgram->loan_ammount} is due on " . $firstDueDate->format('F d, Y') . ".\n\nThank you.";
+            $body = "Dear {$coop->name},\n\n"
+                . "Your amortization schedule has been successfully generated under the program '{$program->name}'.\n"
+                . "Your first payment of ₱{$coopProgram->loan_ammount} is due on " . $firstDueDate->format('F d, Y') . ".\n\nThank you.";
 
             Mail::raw($body, function ($message) use ($coopDetail, $subject) {
                 $message->to($coopDetail->email)->subject($subject);
             });
         }
 
+        // ✅ Create admin notification record
         Notifications::create([
             'schedule_id' => null,
             'coop_id' => $coop->id,
             'type' => 'has_schedule',
             'subject' => 'Amortization Schedule Created',
-            'body' => "The cooperative '{$coop->name}' has been issued an amortization schedule under the '{$program->name}' program. First due date: " . $firstDueDate->format('F d, Y') . ".",
+            'body' => "The cooperative '{$coop->name}' has been issued an amortization schedule under the '{$program->name}' program. "
+                . "First due date: " . $firstDueDate->format('F d, Y') . ".",
             'processed' => 1,
         ]);
 
+        // ✅ Redirect with success
         return redirect()->route('loan.tracker.show', $coopProgram->id)
             ->with('success', 'Loan finalized and amortization schedule generated successfully!');
     }
+
 
     /**
      * Display a specific coop program.
