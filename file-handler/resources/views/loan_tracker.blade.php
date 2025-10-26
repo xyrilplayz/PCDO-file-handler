@@ -122,10 +122,10 @@
                                 {{ $schedule->date_paid ? \Carbon\Carbon::parse($schedule->date_paid)->toFormattedDateString() : 'N/A' }}
                             @elseif($schedule->status === 'Partial Paid')
                                 🟡 Partial Paid (₱{{ number_format($schedule->balance, 2) }} remaining)
+                            @elseif($isOverdue_today)
+                                ❗ Due Today ❗
                             @elseif(!$schedule->is_paid && $schedule->due_date->isPast())
                                 ❌ Overdue (₱{{ number_format($schedule->balance, 2) }} unpaid)
-                            @elseif(!$schedule->is_paid && $schedule->due_date->isToday())
-                                ❗ Due Today ❗
                             @else
                                 🔜 Next Due
                             @endif
