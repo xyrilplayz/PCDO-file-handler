@@ -16,13 +16,16 @@ class AmmortizationSchedule extends Model
         'penalty_amount',
         'balance',
         'notes',
+        "receipt_image"
     ];
 
     protected $casts = [
         'due_date' => 'datetime',
         'date_paid' => 'datetime',
-    ];
 
+    ];
+    protected $hidden = ['receipt_image'];
+    
     public function markPaid()
     {
         $this->status = true;

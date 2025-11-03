@@ -101,15 +101,26 @@ class AmmortizationScheduleController extends Controller
         return view('loan_tracker', compact('loan', 'coop'));
     }
 
-    public function markPaid(AmmortizationSchedule $schedule)
+    public function markPaid(Request $request, AmmortizationSchedule $schedule)
     {
+        $request->validate([
+            'receipt_image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        // ✅ Convert to binary
+        $binaryImage = file_get_contents($request->file('receipt_image')->getRealPath());
+        $schedule->receipt_image = base64_encode($binaryImage);
+
         $schedule->update([
             'status' => 'Paid',
             'date_paid' => now(),
+            'receipt_image' => $binaryImage, // LONGBLOB content
         ]);
 
-        return back()->with('success', 'Payment marked as paid.');
+        return back()->with('success', 'Payment marked as paid with receipt uploaded.');
     }
+
+
 
     public function sendOverdueEmail($scheduleId)
     {
@@ -155,12 +166,16 @@ class AmmortizationScheduleController extends Controller
 
         $request->validate([
             'amount_paid' => 'required|numeric|min:0',
+            'receipt_image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
+
+        // Convert uploaded file to binary (raw bytes)
+        $binaryImage = file_get_contents($request->file('receipt_image')->getRealPath());
+        $schedule->receipt_image = base64_encode($binaryImage);
 
         $payment = $request->amount_paid;
         $remaining = $payment;
 
-        // Get all schedules for this loan/program ordered by due date
         $schedules = AmmortizationSchedule::where('coop_program_id', $schedule->coop_program_id)
             ->orderBy('due_date', 'asc')
             ->get();
@@ -169,10 +184,7 @@ class AmmortizationScheduleController extends Controller
             if ($remaining <= 0)
                 break;
 
-            // Total due for this schedule (installment + penalty + any balance carried over)
             $due = ($sch->installment + $sch->penalty_amount);
-
-            // How much is still unpaid
             $needed = $due - $sch->amount_paid;
 
             if ($needed > 0) {
@@ -189,9 +201,10 @@ class AmmortizationScheduleController extends Controller
                     $sch->status = 'Partial Paid';
                 }
 
+                // ✅ Save binary image in LONGBLOB
+                $sch->receipt_image = $binaryImage;
                 $sch->save();
             } else {
-                // Already fully paid earlier
                 $sch->status = 'Paid';
                 $sch->balance = 0;
                 $sch->date_paid = $sch->date_paid ?? now();
@@ -199,8 +212,10 @@ class AmmortizationScheduleController extends Controller
             }
         }
 
-        return back()->with('success', 'Payment noted successfully.');
+        return back()->with('success', 'Payment noted successfully with receipt uploaded.');
     }
+
+
 
     public function downloadPdf($coopProgramId)
     {
@@ -285,8 +300,8 @@ class AmmortizationScheduleController extends Controller
             $schedule->date_paid = now();
             $schedule->save();
         }
-        
-        
+
+
         return redirect()->back()->with('success', 'Loan marked as resolved and all schedules set to Paid.');
     }
 

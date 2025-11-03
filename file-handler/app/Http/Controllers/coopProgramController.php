@@ -166,7 +166,7 @@ class CoopProgramController extends Controller
 
             AmmortizationSchedule::create([
                 'coop_program_id' => $coopProgram->id,
-                'due_date' => $startDate->copy()->addMonths($i - 1),
+                'due_date' => $startDate->copy()->addMonthsNoOverflow($i),
                 'installment' => $amountDue,
                 'status' => 'Unpaid',
             ]);

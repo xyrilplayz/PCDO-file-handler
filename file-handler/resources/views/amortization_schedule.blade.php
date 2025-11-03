@@ -220,6 +220,39 @@
         </tbody>
     </table>
 
+    {{-- PAGE BREAK for Receipts --}}
+    <div style="page-break-before: always;"></div>
+    
+    <h2>Payment Receipts</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Period</th>
+                <th>Due Date</th>
+                <th>Receipt</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($schedules as $i => $s)
+                @if(!empty($s->receipt_image))
+                    @php
+                        $base64 = base64_encode($s->receipt_image);
+                        $mime = 'image/png'; // adjust if needed
+                    @endphp
+                    <tr>
+                        <td>Period {{ $i + 1 }}</td>
+                        <td>{{ \Carbon\Carbon::parse($s->due_date)->format('Y-m-d') }}</td>
+                        <td>
+                            <img src="data:{{ $mime }};base64,{{ $base64 }}" alt="Receipt Image"
+                                style="width:200px; height:auto; border:1px solid #000;">
+                        </td>
+                    </tr>
+                @endif
+            @endforeach
+        </tbody>
+    </table>
+
 </body>
 
 </html>

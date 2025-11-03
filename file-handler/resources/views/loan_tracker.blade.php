@@ -11,14 +11,14 @@
         <p><strong>Grace Period:</strong> {{ $coop->with_grace }} months</p>
         <p><strong>Term:</strong> {{ $loan->program->term_months - $coop->with_grace }} months</p>
         <br>
-        {{-- -if statement here
-        if after 4 months then delinquent --}}
+
         <a class="btn btn-secondary" href="{{ route('amortization.download', $loan->id) }}">Download</a>
 
         <form action="{{ route('loan.incomplete', $loan->id) }}" method="POST" style="display:inline;">
             @csrf
             <button type="submit" class="btn btn-secondary">Nullified</button>
         </form>
+
         @if (!$coop->program_status)
             <form action="{{ route('resolved.store', $loan->id) }}" method="POST" enctype="multipart/form-data"
                 style="display:inline;">
@@ -27,7 +27,6 @@
                 <button type="submit" class="btn btn-success">Resolved</button>
             </form>
         @endif
-
 
         <table class="table table-bordered mt-3">
             <thead>
@@ -48,34 +47,22 @@
 
                 @foreach($loan->ammortizationSchedules as $schedule)
                     @php
-                        // Compute total due with carry-over applied
                         $dueBase = $schedule->installment + $schedule->penalty_amount;
                         $totalDue = $dueBase + $carryOver - $schedule->amount_paid;
-                        $previous = $loop->index > 0 ? $loan->ammortizationSchedules[$loop->index - 1] : null;
-
-                        // Update carryOver for the next row
                         $carryOver = max(0, $totalDue);
-
-
-                        $isOverdue_today = !$schedule->is_paid && $schedule->due_date->istoday();
-                        $isOverdue = !$schedule->is_paid && $schedule->due_date->ispast();
-
-
+                        $isOverdue_today = !$schedule->is_paid && $schedule->due_date->isToday();
+                        $isOverdue = !$schedule->is_paid && $schedule->due_date->isPast();
                         $monthsOverdue = $isOverdue
                             ? \Carbon\Carbon::parse($schedule->due_date)->diffInMonths(now())
                             : 0;
-
-                        // Penalty is always 1% per month overdue
                         $penaltyAmount = $monthsOverdue > 0
                             ? $schedule->amount_due * 0.01 * $monthsOverdue
                             : 0;
                     @endphp
 
                     <tr class="{{ $schedule->rowClass }}">
-                        {{-- Due Date --}}
                         <td>{{ \Carbon\Carbon::parse($schedule->due_date)->toFormattedDateString() }}</td>
 
-                        {{-- Amount --}}
                         <td>
                             ₱{{ number_format($schedule->installment, 2) }}
                             @if($schedule->penalty_amount > 0)
@@ -85,7 +72,6 @@
                             @endif
                         </td>
 
-                        {{-- Penalty --}}
                         <td>
                             @if(!$schedule->isPaid)
                                 @if($schedule->penalty_amount == 0)
@@ -106,17 +92,12 @@
                             @endif
                         </td>
 
-                        {{-- Dues (with carryover logic) --}}
-                        <td>
-                            ₱{{ number_format(max(0, $totalDue), 2) }}
-                        </td>
+                        <td>₱{{ number_format(max(0, $totalDue), 2) }}</td>
 
-                        {{-- Status --}}
                         <td>
                             @if($schedule->status === 'Resolved')
                                 🟩 <strong>Resolved</strong>
-                                <br>
-                                {{ $schedule->date_paid ? \Carbon\Carbon::parse($schedule->date_paid)->toFormattedDateString() : 'N/A' }}
+                                <br>{{ $schedule->date_paid ? \Carbon\Carbon::parse($schedule->date_paid)->toFormattedDateString() : 'N/A' }}
                             @elseif($schedule->status === 'Paid' || $schedule->is_paid)
                                 ✅ Paid on
                                 {{ $schedule->date_paid ? \Carbon\Carbon::parse($schedule->date_paid)->toFormattedDateString() : 'N/A' }}
@@ -131,11 +112,10 @@
                             @endif
                         </td>
 
-                        {{-- Payment --}}
+                        {{-- ✅ FIXED: Payment section with working receipt upload --}}
                         <td>
                             @if ($schedule->status === 'Resolved')
-                                <span class="badge bg-success">Resolved</span>
-                                <br>All payments settled.
+                                <span class="badge bg-success">Resolved</span><br>All payments settled.
                             @elseif ($schedule->status === 'Paid')
                                 <span class="badge bg-success">Paid</span>
                                 ₱{{ number_format($schedule->installment, 2) }}
@@ -148,17 +128,27 @@
                                 Carried Over:
                                 ₱{{ number_format(($schedule->installment + $schedule->penalty_amount) - $schedule->amount_paid, 2) }}
                             @else
-                                {{-- Only show payment buttons if not resolved --}}
                                 @if($loan->program_status !== 'Resolved')
-                                    <form action="{{ route('schedules.markPaid', $schedule->id) }}" method="POST">
+                                    {{-- ✅ Mark Paid now includes receipt upload --}}
+                                    <form action="{{ route('schedules.markPaid', $schedule->id) }}" method="POST"
+                                        enctype="multipart/form-data">
                                         @csrf
-                                        <button type="submit" class="btn btn-sm btn-primary">Mark Paid</button>
+                                        <label class="form-label small">Upload Receipt:</label>
+                                        <input type="file" name="receipt_image" accept="image/*" required
+                                            class="form-control form-control-sm mb-1">
+                                        <button type="submit" class="btn btn-sm btn-primary w-100">Mark as Paid</button>
                                     </form>
-                                    <form action="{{ route('schedules.post', $schedule->id) }}" method="POST" class="mt-1">
+
+                                    {{-- ✅ Note Payment (update amount) --}}
+                                    <form action="{{ route('schedules.post', $schedule->id) }}" method="POST"
+                                        enctype="multipart/form-data" class="mt-2">
                                         @csrf
                                         <input type="number" step="0.01" name="amount_paid" value="{{ $schedule->amount_paid }}"
-                                            class="form-control form-control-sm" placeholder="Amount paid">
-                                        <button type="submit" class="btn btn-sm btn-warning mt-1">Update Payment</button>
+                                            class="form-control form-control-sm mb-1" placeholder="Enter amount paid" required>
+                                        <label class="form-label small">Upload Receipt:</label>
+                                        <input type="file" name="receipt_image" accept="image/*" required
+                                            class="form-control form-control-sm mb-1">
+                                        <button type="submit" class="btn btn-sm btn-warning w-100">Note Payment</button>
                                     </form>
                                 @else
                                     <span class="text-muted">Payment disabled (Resolved)</span>
@@ -166,7 +156,6 @@
                             @endif
                         </td>
 
-                        {{-- Notify --}}
                         <td>
                             @if ($schedule->status !== 'Paid')
                                 <form action="{{ route('schedules.sendOverdueEmail', $schedule->id) }}" method="POST">

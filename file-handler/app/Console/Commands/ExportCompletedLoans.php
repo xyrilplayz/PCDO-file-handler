@@ -38,7 +38,7 @@ class ExportCompletedLoans extends Command
 
             foreach ($coopPrograms as $coopProgram) {
                 $schedules = $coopProgram->ammortizationSchedules()
-                    ->select('id', 'due_date', 'installment', 'date_paid', 'amount_paid', 'status', 'notes')
+                    ->select('id', 'due_date', 'installment', 'date_paid', 'amount_paid', 'status', 'notes', 'receipt_image')
                     ->orderBy('due_date')
                     ->get();
                 if ($schedules->isEmpty())
@@ -80,7 +80,6 @@ class ExportCompletedLoans extends Command
                 $address = $coop->detail->address ?? 'Unknown Address';
                 $contact = $coop->detail->contact_number ?? 'N/A';
 
-                // ✅ Generate PDF directly from Blade view
                 $pdf = Pdf::loadView('amortization_schedule', [
                     'coop' => $coop,
                     'coopProgram' => $coopProgram,
@@ -93,7 +92,7 @@ class ExportCompletedLoans extends Command
                 ])
                     ->setPaper('a4', 'portrait')
                     ->setOptions([
-                        'dpi' => 80, // lower DPI = more fits on one page
+                        'dpi' => 80,
                         'defaultFont' => 'sans-serif',
                         'isHtml5ParserEnabled' => true,
                         'isRemoteEnabled' => true,
