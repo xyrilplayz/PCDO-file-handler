@@ -25,7 +25,7 @@ class AmmortizationSchedule extends Model
 
     ];
     protected $hidden = ['receipt_image'];
-    
+
     public function markPaid()
     {
         $this->status = true;
@@ -58,6 +58,10 @@ class AmmortizationSchedule extends Model
     public function pendingNotification()
     {
         return $this->hasMany(PendingNotification::class, 'schedule_id');
+    }
+    public function details()
+    {
+        return $this->hasOne(CoopDetail::class, 'coop_id', 'id');
     }
 
     /**

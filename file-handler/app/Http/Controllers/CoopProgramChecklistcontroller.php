@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Checklists;
 use Illuminate\Http\Request;
 use App\Models\CoopProgram;
-use App\Models\Checklists;
+use App\Models\ProgramChecklists;
 use App\Models\CoopProgramChecklist;
 
 class CoopProgramChecklistController extends Controller
@@ -14,36 +15,32 @@ class CoopProgramChecklistController extends Controller
      */
     public function show($coopProgramId)
     {
-        $coopProgram = CoopProgram::with(['program', 'cooperative'])->findOrFail($coopProgramId);
+        $coopProgram = CoopProgram::with(['program'])->findOrFail($coopProgramId);
 
-        // base checklist items
-        $checklistItems = $coopProgram->program->checklists;
-
-        // Add conditional logic by program name
-        if ($coopProgram->program->name === 'USAD SULONG COPSE') {
-            $checklistItems = $checklistItems->take(24); // only 24
-        } elseif (in_array($coopProgram->program->name, ['LICAP', 'PCLRP'])) {
-            $checklistItems = $checklistItems->take(26); // 26
-        }
+        // Get all ProgramChecklists for this program
+        $programChecklists = ProgramChecklists::with('uploads', 'checklist')
+            ->where('program_id', $coopProgram->program_id)
+            ->get();
 
         return view('checklist', [
             'cooperative' => $coopProgram,
-            'checklistItems' => $checklistItems,
+            'checklistItems' => $programChecklists,
         ]);
     }
+
     /**
      * Upload a file for a checklist item.
      */
     public function upload(Request $request, $coopProgramId)
     {
         $request->validate([
-            'program_checklist_id' => 'required|exists:checklists,id',
-            'file' => 'required|file|max:5120',
+            'program_checklist_id' => 'required|exists:program_checklists,id',
+            'file' => 'required|file|max:5120', // 5 MB
         ]);
 
         $file = $request->file('file');
 
-        // Replace old file if exists
+        // Check if a file already exists for this program & checklist
         $existingUpload = CoopProgramChecklist::where('coop_program_id', $coopProgramId)
             ->where('program_checklist_id', $request->program_checklist_id)
             ->first();
@@ -54,7 +51,7 @@ class CoopProgramChecklistController extends Controller
 
         CoopProgramChecklist::create([
             'coop_program_id' => $coopProgramId,
-            'program_checklist_id' => $request->program_checklist_id,
+            'program_checklist_id' => $request->program_checklist_id, // now correct pivot ID
             'file_name' => $file->getClientOriginalName(),
             'mime_type' => $file->getClientMimeType(),
             'file_content' => file_get_contents($file->getRealPath()),
@@ -74,6 +71,7 @@ class CoopProgramChecklistController extends Controller
             ->header('Content-Type', $upload->mime_type)
             ->header('Content-Disposition', 'attachment; filename="' . $upload->file_name . '"');
     }
+
 
     /**
      * Delete an uploaded file.
