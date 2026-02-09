@@ -78,10 +78,13 @@ Route::group(['middleware' => 'auth'], function () {
         '/schedules/{schedule}/send-overdue',
         [AmmortizationScheduleController::class, 'sendOverdueEmail']
     )->name('schedules.sendOverdueEmail');
+    Route::post('/schedules/notify-overdue', [AmmortizationScheduleController::class, 'notifyOverdue'])
+    ->name('schedules.notifyOverdue');
+
 
     Route::get('/amortization/{loan}/download', [AmmortizationScheduleController::class, 'downloadPdf'])->name('amortization.download');
     Route::post('/amortization/{loan}/incomplete', [AmmortizationScheduleController::class, 'markIncomplete'])->name('loan.incomplete');
-    
+
 
 
 
@@ -107,6 +110,10 @@ Route::group(['middleware' => 'auth'], function () {
     //amount edits
     Route::put('/loans/{loan}/update-amount', [AmmortizationScheduleController::class, 'updateAmount'])->name('loans.updateAmount');
     Route::post('/schedules/{schedule}/note-payment', [AmmortizationScheduleController::class, 'notePayment'])->name('schedules.post');
+    Route::post('/onetap/{loanId}', [AmmortizationScheduleController::class, 'OneTap'])
+        ->name('onetap.pay');
+
+
 
     Route::post('/loans/schedules/{schedule}/penalty', [AmmortizationScheduleController::class, 'penalty'])
         ->name('schedules.penalty');

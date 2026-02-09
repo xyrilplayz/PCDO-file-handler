@@ -23,7 +23,7 @@
 
         @foreach($checklistItems as $item)
             <div class="card my-3 p-3">
-                <h5>{{ $item->name }}</h5>
+                <h5>{{ $item->checklist->name }}</h5>
 
                 <form action="{{ route('checklist.upload', $cooperative->id) }}" method="POST" enctype="multipart/form-data">
                     @csrf
@@ -31,15 +31,17 @@
                     <input type="file" name="file" required>
                     <button type="submit" class="btn btn-primary btn-sm">Upload</button>
                 </form>
+
+                {{-- Display uploaded files for this checklist and cooperative --}}
                 @php
                     $uploads = $item->uploads->where('coop_program_id', $cooperative->id);
                 @endphp
-                {{-- If uploaded, show download --}}
+
                 @if($uploads->isNotEmpty())
                     <div class="mt-2">
                         @foreach($uploads as $upload)
                             <a href="{{ route('checklist.download', $upload->id) }}" class="btn btn-success btn-sm d-block mb-1">
-                                Download (Availment #{{ $upload->coop_program_id }}) - {{ $upload->file_name }}
+                                Download - {{ $upload->file_name }}
                             </a>
                         @endforeach
                     </div>
@@ -69,14 +71,18 @@
                         </div>
                         <small id="loan_range" class="form-text text-muted"></small>
                     </div>
-
                     <div class="form-group mt-3">
-                        <label for="with_grace">Grace Period:</label>
-                        <select name="with_grace" id="with_grace" class="form-control" required>
-                            <option value="0">Without Grace Period</option>
-                            <option value="1">With Grace Period</option>
-                        </select>
+                        <label for="start_date">Start Date of Loan:</label>
+                        <input type="date" name="start_date" id="start_date" class="form-control" required>
+                        <small class="form-text text-muted">This date will be used as the basis of amortization
+                            scheduling.</small>
                     </div>
+                    <div class="col-md-4">
+                        <label for="with_grace">Grace Period (months)</label>
+                        <input type="number" min="0" class="form-control" name="with_grace" required>
+                    </div>
+
+
 
                     {{-- ✅ Consent Checkbox --}}
                     <div class="form-check mt-4">

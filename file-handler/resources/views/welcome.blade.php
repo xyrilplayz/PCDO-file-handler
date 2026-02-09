@@ -18,6 +18,14 @@
             </a>
         </div>
 
+        <form action="{{ route('schedules.notifyOverdue') }}" method="POST">
+            @csrf
+            <button type="submit" class="btn btn-danger">
+                Notify All Overdue
+            </button>
+        </form>
+
+
         <table class="table table-bordered table-striped">
             <thead class="table-dark">
                 <tr>
@@ -39,11 +47,11 @@
                                 View
                             </a>
                             @foreach($coop->coopProgram as $coopProgram)
-                            @if ($coopProgram->program_status === 'Ongoing')
-                            <a href="{{ route('checklists.show', $coopProgram->id) }}" class="btn btn-secondary mt-1">
-                                    View checklist for {{ $coopProgram->program->name }}
-                                </a>
-                            @endif
+                                @if ($coopProgram->program_status === 'Ongoing')
+                                    <a href="{{ route('checklists.show', $coopProgram->id) }}" class="btn btn-secondary mt-1">
+                                        View checklist for {{ $coopProgram->program->name }}
+                                    </a>
+                                @endif
                             @endforeach
                         </td>
                     </tr>
