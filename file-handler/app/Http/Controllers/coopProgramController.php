@@ -111,7 +111,8 @@ class CoopProgramController extends Controller
             'loan_ammount' => 'required|numeric|min:1',
             'with_grace' => 'required|numeric|min:0',   // Grace period is now a number
             'consent' => 'accepted',
-            'start_date' => 'required|date'
+            'start_date' => 'required|date',
+            'moa_file' => 'required|file|mimes:pdf|max:2048', // ✅ MOA validation
         ]);
 
         $program = $coopProgram->program;
@@ -121,7 +122,6 @@ class CoopProgramController extends Controller
             $request->loan_ammount < $program->min_amount ||
             $request->loan_ammount > $program->max_amount
         ) {
-
             return back()->withErrors([
                 'loan_ammount' => "Loan amount must be between ₱{$program->min_amount} and ₱{$program->max_amount}"
             ]);
@@ -145,6 +145,22 @@ class CoopProgramController extends Controller
             'consenter' => Auth::id(),
         ]);
 
+        // ==============================
+        // ✅ Save MOA file in separate table
+        // ==============================
+        if ($request->hasFile('moa_file')) {
+            $file = $request->file('moa_file');
+            $fileName = time() . '_MOA_' . $coopProgram->id . '.' . $file->getClientOriginalExtension();
+            $filePath = $file->storeAs('moa_files', $fileName, 'public');
+
+            \App\Models\MOA::create([
+                'coop_program_id' => $coopProgram->id,
+                'file_path' => $filePath,
+                'file_name' => $file->getClientOriginalName(),
+                'date_signed' => $request->date_signed ?? null,
+                'uploaded_by' => Auth::id(),
+            ]);
+        }
 
         // Grace period in months
         $graceMonths = (int) $request->with_grace;
@@ -166,7 +182,6 @@ class CoopProgramController extends Controller
 
         // Generate schedule
         for ($i = 1; $i <= $monthsToPay; $i++) {
-
             $amountDue = $amountPerMonth;
             if ($i === $monthsToPay) {
                 $amountDue += $remainder;
@@ -210,10 +225,8 @@ class CoopProgramController extends Controller
         // ]);
 
         return redirect()->route('loan.tracker.show', $coopProgram->id)
-            ->with('success', 'Loan finalized and amortization schedule generated successfully!');
+            ->with('success', 'Loan finalized, MOA uploaded, and amortization schedule generated successfully!');
     }
-
-
     /**
      * Display a specific coop program.
      */

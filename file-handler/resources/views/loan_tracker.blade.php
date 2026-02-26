@@ -127,7 +127,7 @@
                         </td>
 
                         <td>
-                            @if(!$isPaid && !$isPartial)
+                            @if(!$isPaid && !$isPartial && !$isOverdue)
                                 <form action="{{ route('schedules.markPaid', $schedule->id) }}" method="POST"
                                     enctype="multipart/form-data">
                                     @csrf
@@ -147,6 +147,8 @@
                                 </form>
                             @elseif($isPartial)
                                 <span class="badge bg-warning">Partial Paid</span>
+                            @elseif ($isOverdue)
+                                <span class="badge bg-danger">Overdue</span>
                             @else
                                 <span class="badge bg-success">Paid</span>
                             @endif

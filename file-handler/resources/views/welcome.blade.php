@@ -33,6 +33,7 @@
                     <th>Name</th>
                     <th>Type</th>
                     <th>Availed Program</th>
+                    <th>MOA</th>
                 </tr>
             </thead>
             <tbody>
@@ -50,6 +51,15 @@
                                 @if ($coopProgram->program_status === 'Ongoing')
                                     <a href="{{ route('checklists.show', $coopProgram->id) }}" class="btn btn-secondary mt-1">
                                         View checklist for {{ $coopProgram->program->name }}
+                                    </a>
+                                @endif
+                            @endforeach
+                        </td>
+                        <td>
+                            @foreach($coop->coopProgram as $coopProgram)
+                                @if ($coopProgram->program_status === 'Ongoing')
+                                    <a href="{{ route('moa.details', $coopProgram->id) }}" class="btn btn-primary mt-1">
+                                        View MOAs for {{ $coopProgram->program->name }}
                                     </a>
                                 @endif
                             @endforeach

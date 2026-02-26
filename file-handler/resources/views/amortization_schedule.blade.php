@@ -155,6 +155,7 @@
             @foreach($schedules as $i => $s)
                 @php
                     $totalInstallment += $s->installment ?? 0;
+                    
                 @endphp
                 <tr>
                     <td>{{ $i + 1 }}</td>
@@ -169,7 +170,7 @@
             {{-- ✅ Total Row --}}
             <tr class="total-row">
                 <td colspan="2">Total</td>
-                <td>{{ number_format($totalInstallment, 2) }}</td>
+                <td>{{ number_format($coopProgram->loan_ammount, 2) }}</td>
                 <td colspan="3"></td>
             </tr>
         </tbody>

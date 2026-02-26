@@ -77,6 +77,11 @@ class CoopProgram extends Model
         return $this->hasMany(CoopProgramProgress::class);
     }
 
+    public function moas()
+    {
+        return $this->hasMany(Moa::class);
+    }
+
 
     function generateChecklists()
     {

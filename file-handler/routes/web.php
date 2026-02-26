@@ -22,6 +22,7 @@ use App\Notifications\LoanOverdueNotification;
 use App\Http\Controllers\OldCsvController;
 use App\Http\Controllers\CoopProgramProgressController;
 use App\Http\Controllers\ResolvedController;
+use App\Http\Controllers\MoaController;
 
 
 
@@ -61,7 +62,11 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/program/create', [CoopProgramController::class, 'create'])->name('program.create');
     Route::post('/program', [CoopProgramController::class, 'store'])->name('program.store');
     Route::get('/checklist/{coopProgramid}', [CoopProgramChecklistcontroller::class, 'show'])->name('checklists.show');
-    Route::post('/program/{coopProgram}/finalize', [CoopProgramController::class, 'finalizeLoan'])->name('program.finalizeLoan');
+    Route::post(
+        '/loan/{coopProgram}/finalize',
+        [CoopProgramController::class, 'finalizeLoan']
+    )
+        ->name('program.finalize');
 
     //search upload
     Route::post('/checklist/{cooperative}/upload', [CoopProgramChecklistcontroller::class, 'upload'])->name('checklist.upload');
@@ -79,12 +84,11 @@ Route::group(['middleware' => 'auth'], function () {
         [AmmortizationScheduleController::class, 'sendOverdueEmail']
     )->name('schedules.sendOverdueEmail');
     Route::post('/schedules/notify-overdue', [AmmortizationScheduleController::class, 'notifyOverdue'])
-    ->name('schedules.notifyOverdue');
+        ->name('schedules.notifyOverdue');
 
 
     Route::get('/amortization/{loan}/download', [AmmortizationScheduleController::class, 'downloadPdf'])->name('amortization.download');
     Route::post('/amortization/{loan}/incomplete', [AmmortizationScheduleController::class, 'markIncomplete'])->name('loan.incomplete');
-
 
 
 
@@ -124,4 +128,12 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/resolved/{coopProgram}', [ResolvedController::class, 'store'])->name('resolved.store');
     Route::get('/resolved/download/{id}', [ResolvedController::class, 'download'])->name('resolved.download');
 
+
+    //MOAED
+    Route::get('/coop-program/{id}/moa', [MoaController::class, 'index'])->name('moa.details');
+
+    Route::post('/coop-program/{id}/moa/upload', [MoaController::class, 'upload'])
+        ->name('moa.upload');
 });
+
+

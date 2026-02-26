@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Mail;
 
+
 class AmmortizationScheduleController extends Controller
 {
 
@@ -108,6 +109,7 @@ class AmmortizationScheduleController extends Controller
             ->where('due_date', '<', now())
             ->get();
 
+
         // Group schedules by coop_program
         $groupedByCoop = $overdueSchedules->groupBy('coop_program_id');
  
@@ -127,6 +129,7 @@ class AmmortizationScheduleController extends Controller
             // Collect emails to notify
             $Email = $coopProgram->cooperative->coopDetail->email;
 
+
             if (empty($Email)) {
                 $report[] = "No emails found for {$coopName}. Skipped.";
                 continue;
@@ -139,6 +142,8 @@ class AmmortizationScheduleController extends Controller
             })->implode("\n");
 
             $message = "Dear {$coopName},\n\nThe following schedules are overdue:\n{$scheduleList}\n\nPlease settle immediately.\n\nThanks.";
+
+            
 
             try {
                 // Send email
@@ -382,7 +387,6 @@ class AmmortizationScheduleController extends Controller
 
 
             $lastSchedule->save();
-
             $lastSchedule = $newSchedule;
         }
 
@@ -563,8 +567,5 @@ class AmmortizationScheduleController extends Controller
 
         return redirect()->back()->with('success', 'Loan marked as resolved and all schedules set to Paid.');
     }
-
-
-
 
 }
